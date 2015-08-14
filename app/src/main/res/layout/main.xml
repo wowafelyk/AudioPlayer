@@ -27,8 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:weightSum="1"
-            android:layout_marginBottom="@dimen/activity_horizontal_margin"
-            android:measureWithLargestChild="false">
+            android:layout_marginBottom="@dimen/activity_horizontal_margin">
 
             <LinearLayout
                 android:orientation="vertical"
@@ -43,77 +42,52 @@
                     android:text="Medium Text"
                     android:id="@+id/songName" />
 
+                <SeekBar
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/seekBar" />
+
                 <LinearLayout
                     android:orientation="horizontal"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="wrap_content"
+                    android:gravity="fill_horizontal">
 
-                    <LinearLayout
-                        android:orientation="vertical"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:text="Small Text"
+                        android:id="@+id/textView"
+                        android:gravity="left"
+                        android:layout_gravity="left"
+                        android:layout_weight="1" />
 
-                        <SeekBar
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:id="@+id/seekBar" />
-
-                        <LinearLayout
-                            android:orientation="horizontal"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="fill_horizontal">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:textAppearance="?android:attr/textAppearanceSmall"
-                                android:text="Small Text"
-                                android:id="@+id/textView"
-                                android:gravity="left"
-                                android:layout_gravity="left"
-                                android:layout_weight="1" />
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:textAppearance="?android:attr/textAppearanceSmall"
-                                android:text="Small Text"
-                                android:id="@+id/textView2"
-                                android:gravity="right"
-                                android:layout_weight="1"
-                                android:layout_gravity="right" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:orientation="vertical"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
-
-                        <ImageButton
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:id="@+id/imageButton5"
-                            android:src="@drawable/loop_action"
-                            android:layout_gravity="right"
-                            android:layout_marginLeft="@dimen/margin_5dp"
-                            android:layout_marginRight="@dimen/margin_5dp" />
-                    </LinearLayout>
-
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:text="Small Text"
+                        android:id="@+id/textView2"
+                        android:gravity="right"
+                        android:layout_weight="1"
+                        android:layout_gravity="right" />
                 </LinearLayout>
-
             </LinearLayout>
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/imageButton5"
+                android:src="@drawable/loop_action"
+                android:layout_gravity="right" />
 
         </LinearLayout>
 
         <LinearLayout
             android:orientation="horizontal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:measureWithLargestChild="false"
-            android:layout_gravity="center_horizontal|bottom"
-            android:gravity="bottom">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
             <ImageButton
                 android:layout_width="wrap_content"
@@ -145,7 +119,6 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/imageButton"
                 android:src="@drawable/random_action" />
-
         </LinearLayout>
 
     </LinearLayout>
