@@ -3,4 +3,7 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="button_loop">Repeat</string>
+    <string name="button_random">Random</string>
+    <string name="title_activity_file_manager">FileManagerActivity</string>
 </resources>

@@ -1,125 +1,192 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity"
-    android:orientation="vertical"
-    android:weightSum="1">
+    android:weightSum="1"
+    tools:context=".MainActivity">
 
-    <FrameLayout
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0.85">
-
-    </FrameLayout>
+        android:layout_weight="1"
+        android:onClick="onClick" />
 
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#ebfbff"
-        android:layout_weight="0.15">
+        android:orientation="vertical"
+        android:id="@+id/playerPult">
 
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:weightSum="1"
-            android:layout_marginBottom="@dimen/activity_horizontal_margin">
+
+            <TextView
+                android:id="@+id/songName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Name"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:layout_marginLeft="@dimen/activity_horizontal_margin" />
+
+            <TextView
+                android:id="@+id/authorName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AuthorName"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:layout_marginLeft="@dimen/activity_horizontal_margin" />
+
+            <TextView
+                android:id="@+id/albumName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AlbumName"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:layout_marginLeft="@dimen/activity_horizontal_margin" />
 
             <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="238dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:text="Medium Text"
-                    android:id="@+id/songName" />
-
-                <SeekBar
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/seekBar" />
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:measureWithLargestChild="false"
+                android:orientation="horizontal"
+                android:weightSum="1">
 
                 <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="fill_horizontal">
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-                    <TextView
-                        android:layout_width="0dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Small Text"
-                        android:id="@+id/textView"
-                        android:gravity="left"
-                        android:layout_gravity="left"
-                        android:layout_weight="1" />
+                        android:orientation="horizontal">
 
-                    <TextView
-                        android:layout_width="0dp"
+                        <SeekBar
+                            android:id="@+id/seekBar"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:indeterminate="false" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Small Text"
-                        android:id="@+id/textView2"
-                        android:gravity="right"
-                        android:layout_weight="1"
-                        android:layout_gravity="right" />
+                        android:gravity="fill_horizontal"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/text_progress"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="@dimen/margin_3dp"
+                            android:layout_marginRight="@dimen/margin_3dp"
+                            android:layout_weight="1"
+                            android:gravity="left"
+                            android:text="Small Text"
+                            android:textAppearance="?android:attr/textAppearanceSmall" />
+
+                        <TextView
+                            android:id="@+id/text_duration"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="right"
+                            android:layout_marginLeft="@dimen/margin_3dp"
+                            android:layout_marginRight="@dimen/margin_3dp"
+                            android:layout_weight="1"
+                            android:gravity="right"
+                            android:text="Small Text"
+                            android:textAppearance="?android:attr/textAppearanceSmall" />
+                    </LinearLayout>
+
                 </LinearLayout>
-            </LinearLayout>
 
-            <ImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/imageButton5"
-                android:src="@drawable/loop_action"
-                android:layout_gravity="right" />
+                <ToggleButton
+                    android:id="@+id/move_loop"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/loopbutton"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
+                    android:text="@string/button_loop"
+                    android:textOff=""
+                    android:textOn=""
+                    android:checked="false" />
+                />
+
 
         </LinearLayout>
 
-        <LinearLayout
-            android:orientation="horizontal"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:measureWithLargestChild="false"
+            android:orientation="horizontal">
 
             <ImageButton
+                android:id="@+id/move_prev"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/prevButton"
-                android:src="@drawable/prev_audio_action" />
+                android:onClick="onClick"
+                android:src="@drawable/prev_audio_action"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true" />
 
             <ImageButton
+                android:id="@+id/move_play"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/playButton"
+                android:onClick="onClick"
                 android:scaleType="centerInside"
-                android:src="@drawable/play_action" />
+                android:src="@drawable/play_action"
+                android:layout_alignParentTop="true"
+                android:layout_toRightOf="@+id/move_prev"
+                android:layout_toEndOf="@+id/move_prev" />
 
             <ImageButton
+                android:id="@+id/move_next"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/nextButton"
-                android:src="@drawable/next_audio_action" />
+                android:onClick="onClick"
+                android:src="@drawable/next_audio_action"
+                android:layout_alignParentTop="true"
+                android:layout_toRightOf="@+id/move_play"
+                android:layout_toEndOf="@+id/move_play" />
 
             <ImageButton
+                android:id="@+id/move_stop"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/imageButton4"
-                android:src="@drawable/stop_action" />
+                android:onClick="onClick"
+                android:src="@drawable/stop_action"
+                android:layout_alignParentTop="true"
+                android:layout_toRightOf="@+id/move_next"
+                android:layout_toEndOf="@+id/move_next" />
 
-            <ImageButton
+            <ToggleButton
+                android:id="@+id/move_random"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/imageButton"
-                android:src="@drawable/random_action" />
-        </LinearLayout>
+                android:background="@drawable/randombutton"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
+                android:text="@string/button_random"
+                android:textOff=""
+                android:textOn=""
+                android:checked="false"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true" />
+        </RelativeLayout>
 
     </LinearLayout>
 
