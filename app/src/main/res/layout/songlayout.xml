@@ -22,31 +22,32 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textAppearance="@android:style/TextAppearance.Holo"
             android:text="SongName"
             android:id="@+id/textSongName"
             android:layout_row="0"
             android:layout_column="1"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@+id/startButton"
-            android:layout_toEndOf="@+id/startButton" />
+            android:layout_toEndOf="@+id/startButton"
+            android:textSize="@dimen/Text_Size_medium" />
 
     <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textAppearance="@android:style/TextAppearance.Holo"
             android:text="Author"
             android:id="@+id/textAuthor"
             android:layout_row="1"
             android:layout_column="1"
-        android:layout_alignTop="@+id/textDuration"
+        android:layout_below="@+id/textSongName"
         android:layout_alignLeft="@+id/textSongName"
         android:layout_alignStart="@+id/textSongName" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textAppearance="@android:style/TextAppearance.Holo"
         android:text="Time"
         android:id="@+id/textDuration"
         android:layout_row="1"
@@ -57,5 +58,16 @@
         android:layout_alignParentEnd="true"
         android:layout_marginRight="13dp"
         android:layout_marginEnd="13dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="@android:style/TextAppearance.Holo"
+        android:text="Album"
+        android:id="@+id/textAlbum"
+        android:layout_below="@+id/textAuthor"
+        android:layout_toRightOf="@+id/startButton"
+        android:layout_toEndOf="@+id/startButton"
+        android:textSize="@dimen/Text_Size_Small" />
 
 </RelativeLayout>

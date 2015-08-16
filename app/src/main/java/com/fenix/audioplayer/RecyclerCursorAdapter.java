@@ -1,5 +1,6 @@
 package com.fenix.audioplayer;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
@@ -8,21 +9,27 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import lib.external.CursorRecyclerViewAdapter;
+
+import static com.fenix.audioplayer.HelperClass.*;
 
 /**
  * Created by fenix on 14.08.2015.
  */
-public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.SongHolder> {
+public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCursorAdapter.SongHolder> {
     //TODO: add OnClickListener
 
     private final static String TEST = "myLog-RecyclerAdapter";
-    private static OnItemClickListener mListener;
-    Cursor cursor;
+    private OnItemClickListener mListener;
+    private Cursor cursor;
 
-    RecyclerViewAdapter(Cursor c) {
-        this.cursor = c;
+    RecyclerCursorAdapter(Context context,Cursor cursor) {
+        super(context,cursor);
+        this.cursor = cursor;
     }
+
 
     public interface OnItemClickListener {
         void onItemClick(View v, SongData data);
@@ -35,6 +42,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     @Override
     public SongHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+
         View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.songlayout, viewGroup, false);
         //TODO: set layout parameters
         SongHolder songHolder = new SongHolder(v);
@@ -43,34 +51,28 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     }
 
     @Override
-    public void onBindViewHolder(SongHolder songHolder, int i) {
-        cursor.moveToPosition(i);
+    public void onBindViewHolder(SongHolder songHolder, Cursor cursor) {
+
         SongData data = new SongData(
                 cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)),
                 cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)),
                 cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)),
-                cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
+                cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA)),
+                cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)));
 
         songHolder.songName.setText(data.getSongName());
         songHolder.autor.setText(data.getAutor());
-        songHolder.duration.setText(MainActivity.timeFormat(cursor.getString(
+        songHolder.album.setText(data.getAlbum());
+        songHolder.duration.setText(timeFormat(cursor.getString(
                 cursor.getColumnIndex(MediaStore.Audio.Media.DURATION))));
 
         songHolder.button.setOnClickListener(new Listener(data));
     }
 
-
-
-    @Override
-    public int getItemCount() {
-        Log.d(TEST, "count=" + (cursor.getCount()));
-        return (cursor.getCount());
-    }
-
     public static class SongHolder extends RecyclerView.ViewHolder {
 
         ImageButton button;
-        TextView songName, autor, duration;
+        TextView songName, autor, duration,album;
 
 
         public SongHolder(View itemView) {
@@ -79,6 +81,8 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             songName = (TextView) itemView.findViewById(R.id.textSongName);
             autor = (TextView) itemView.findViewById(R.id.textAuthor);
             duration = (TextView) itemView.findViewById(R.id.textDuration);
+            album = (TextView) itemView.findViewById(R.id.textAlbum);
+            album = (TextView) itemView.findViewById(R.id.textAlbum);
 
         }
     }
@@ -90,7 +94,13 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
         @Override
         public void onClick(View v) {
-            mListener.onItemClick(v,data);
+            if(mListener!=null) {
+                mListener.onItemClick(v, data);
+            }
         }
+    }
+    //TODO:change metod
+    public void setCursor(Cursor c){
+        this.cursor=c;
     }
 }

@@ -6,4 +6,7 @@
     <dimen name="margin_3dp">3dp</dimen>
     <dimen name="Recycle_Element_Margin">6dp</dimen>
     <dimen name="margin_random_button">8dp</dimen>
+    <dimen name="margin_folder_image">9dp</dimen>
+    <dimen name="Text_Size_Small">13sp</dimen>dimen>
+    <dimen name="Text_Size_medium">15sp</dimen>dimen>
 </resources>

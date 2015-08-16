@@ -8,12 +8,14 @@ public class SongData {
     private String songName;
     private String album;
     private String DATA;
+    private String Title;
 
-    public SongData(String autor, String songName, String album, String DATA) {
+    public SongData(String autor, String songName, String album, String DATA, String Title) {
         this.autor = autor;
         this.songName = songName;
         this.album = album;
         this.DATA = DATA;
+        this.Title=Title;
     }
 
     public SongData() {
@@ -49,5 +51,13 @@ public class SongData {
 
     public void setDATA(String DATA) {
         this.DATA = DATA;
+    }
+
+    public String getTitle() {
+        return Title;
+    }
+
+    public void setTitle(String title) {
+        Title = title;
     }
 }

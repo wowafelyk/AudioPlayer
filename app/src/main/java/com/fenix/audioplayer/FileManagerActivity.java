@@ -1,11 +1,11 @@
 package com.fenix.audioplayer;
 
-import android.support.v7.app.AppCompatActivity;
+import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class FileManagerActivity extends AppCompatActivity {
+public class FileManagerActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

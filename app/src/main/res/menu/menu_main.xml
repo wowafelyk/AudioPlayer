@@ -1,6 +1,20 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
-    <item android:id="@+id/action_settings" android:title="@string/action_settings"
-        android:orderInCategory="100" app:showAsAction="never" />
+    xmlns:yourapp="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_search"
+        android:icon="@drawable/serch_action"
+        android:showAsAction="ifRoom|collapseActionView"
+        android:title="@string/action_search"
+        android:actionViewClass="android.widget.SearchView" />
+    <item
+        android:id="@+id/select_folder"
+        android:icon="@drawable/folder_action"
+        android:showAsAction="ifRoom"
+        android:title="@string/select_folder" />
+    <item
+        android:id="@+id/action_settings"
+        android:icon="@drawable/settings_action"
+        android:showAsAction="never"
+        android:title="@string/action_settings" />
 </menu>

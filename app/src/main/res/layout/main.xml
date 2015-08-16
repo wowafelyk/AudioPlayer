@@ -32,25 +32,36 @@
                 android:layout_height="wrap_content"
                 android:text="Name"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:layout_marginLeft="@dimen/activity_horizontal_margin" />
+                android:layout_marginLeft="@dimen/activity_horizontal_margin"
+                android:textSize="@dimen/Text_Size_medium" />
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <TextView
-                android:id="@+id/authorName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="AuthorName"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:layout_marginLeft="@dimen/activity_horizontal_margin" />
+                    android:id="@+id/authorName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="AuthorName"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:layout_marginLeft="@dimen/activity_horizontal_margin"
+                    android:textSize="@dimen/Text_Size_Small"
+                android:layout_weight="1" />
 
             <TextView
-                android:id="@+id/albumName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="AlbumName"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:layout_marginLeft="@dimen/activity_horizontal_margin" />
+                    android:id="@+id/albumName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="AlbumName"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:layout_marginLeft="@dimen/activity_horizontal_margin"
+                    android:textSize="@dimen/Text_Size_Small"
+                android:layout_weight="1" />
+        </LinearLayout>
 
-            <LinearLayout
+        <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:measureWithLargestChild="false"
@@ -90,7 +101,8 @@
                             android:layout_weight="1"
                             android:gravity="left"
                             android:text="Small Text"
-                            android:textAppearance="?android:attr/textAppearanceSmall" />
+                            android:textAppearance="@android:style/TextAppearance.Holo"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/text_duration"
@@ -102,7 +114,8 @@
                             android:layout_weight="1"
                             android:gravity="right"
                             android:text="Small Text"
-                            android:textAppearance="?android:attr/textAppearanceSmall" />
+                            android:textAppearance="@android:style/TextAppearance.Holo"
+                            android:textSize="12sp" />
                     </LinearLayout>
 
                 </LinearLayout>

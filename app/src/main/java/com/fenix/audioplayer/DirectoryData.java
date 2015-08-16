@@ -4,20 +4,20 @@ package com.fenix.audioplayer;
  * Created by fenix on 15.08.2015.
  */
 public class DirectoryData {
-    private String foderName;
+    private String folderName;
     private Integer count;
 
-    public DirectoryData(String foderName, Integer count) {
-        this.foderName = foderName;
+    public DirectoryData(String folderName, Integer count) {
+        this.folderName = folderName;
         this.count = count;
     }
 
-    public String getFoderName() {
-        return foderName;
+    public String getFolderName() {
+        return folderName;
     }
 
-    public void setFoderName(String foderName) {
-        this.foderName = foderName;
+    public void setFolderName(String folderName) {
+        this.folderName = folderName;
     }
 
     public Integer getCount() {

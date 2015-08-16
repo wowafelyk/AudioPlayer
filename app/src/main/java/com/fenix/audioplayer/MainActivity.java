@@ -2,6 +2,7 @@ package com.fenix.audioplayer;
 
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -18,80 +19,120 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.SearchView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
-import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends Activity implements View.OnClickListener,MediaPlayer.OnCompletionListener {
+import static com.fenix.audioplayer.HelperClass.*;
 
-    private final static String TEST="myTEST";
+public class MainActivity extends Activity implements View.OnClickListener,
+        MediaPlayer.OnCompletionListener,SearchView.OnQueryTextListener {
+
+    private final static String TEST = "myTEST";
+    public final int REQUEST_FOLDER = 101;
+    public final int SEND_SONG_DATA = 102;
+    public final int GET_SONG_DATA = 103;
+
+
+
     private Cursor mCursor;
     private static MediaPlayer mMediaPlayer;
     private boolean mPlay = false;
     private static final int TICK_WHAT = 2;
+    private StringBuilder mPath;
+    private LinkedList<String> mArgs=new LinkedList<String>();
     private ImageButton songButton;
     private ImageButton prevButton, nextButton, playButton, stopButton;
     private ToggleButton loopButton, randomButton;
     private TextView textProgress, textDuration, songName, authorName, albumName;
     private SeekBar seekBar;
+    private SearchView mSearchView;
+    private RecyclerCursorAdapter mAdapter;
     private LinearLayout playerPult;
-    private LinkedHashSet<String> folderSet = new LinkedHashSet<String>();
-    private LinkedList<DirectoryData> list = new LinkedList<>();
+    //private LinkedHashSet<String> folderSet = new LinkedHashSet<String>();
+    //private LinkedList<DirectoryData> mDirectoryList = new LinkedList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        serchMedia(null);
-        countFolder();
+        searchMedia(null, null);
+        //countFolder();
 
+        //TODO: ActionBar FIX
+        /*try {
+            ViewConfiguration config = ViewConfiguration.get(this);
+            Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+            if(menuKeyField != null) {
+                menuKeyField.setAccessible(true);
+                menuKeyField.setBoolean(config, false);
+            }
+        } catch (Exception ex) {
+
+        };*/
 
 
         //find view elements
-        prevButton = (ImageButton)findViewById(R.id.move_prev);
-        nextButton = (ImageButton)findViewById(R.id.move_next);
-        playButton = (ImageButton)findViewById(R.id.move_play);
-        stopButton = (ImageButton)findViewById(R.id.move_stop);
-        loopButton = (ToggleButton)findViewById(R.id.move_loop);
-        randomButton = (ToggleButton)findViewById(R.id.move_random);
-        seekBar = (SeekBar)findViewById(R.id.seekBar);
-        textDuration = (TextView)findViewById(R.id.text_duration);
-        textProgress = (TextView)findViewById(R.id.text_progress);
-        songName = (TextView)findViewById(R.id.songName);
-        authorName = (TextView)findViewById(R.id.authorName);
-        albumName = (TextView)findViewById(R.id.albumName);
-        playerPult = (LinearLayout)findViewById(R.id.playerPult);
+        prevButton = (ImageButton) findViewById(R.id.move_prev);
+        nextButton = (ImageButton) findViewById(R.id.move_next);
+        playButton = (ImageButton) findViewById(R.id.move_play);
+        stopButton = (ImageButton) findViewById(R.id.move_stop);
+        loopButton = (ToggleButton) findViewById(R.id.move_loop);
+        randomButton = (ToggleButton) findViewById(R.id.move_random);
+        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        textDuration = (TextView) findViewById(R.id.text_duration);
+        textProgress = (TextView) findViewById(R.id.text_progress);
+        songName = (TextView) findViewById(R.id.songName);
+        authorName = (TextView) findViewById(R.id.authorName);
+        albumName = (TextView) findViewById(R.id.albumName);
+        playerPult = (LinearLayout) findViewById(R.id.playerPult);
 
         //Changes in view
         playerPult.setVisibility(View.GONE);
 
 
         //init RecyclerView
-        RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recyclerView);
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         recyclerView.setHasFixedSize(true);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(linearLayoutManager);
-        RecyclerViewAdapter adapter = new RecyclerViewAdapter(mCursor);
-        recyclerView.setAdapter(adapter);
-        adapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
+        mAdapter = new RecyclerCursorAdapter(this,mCursor);
+        recyclerView.setAdapter(mAdapter);
+        mAdapter.setOnItemClickListener(new RecyclerCursorAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(View v,SongData data) {
-                if(songButton !=null) {
+            public void onItemClick(View v, SongData data) {
+                if (songButton != null) {
                     songButton.setImageResource(R.drawable.music_action);
                 }
-                songButton = (ImageButton)v;
+                songButton = (ImageButton) v;
                 songButton.setImageResource(R.drawable.play_action);
                 startPlay(data);
             }
         });
+
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                if (mMediaPlayer != null) {
+                    mMediaPlayer.seekTo(seekBar.getProgress());
+                }
+            }
+        });
+
 
     }
 
@@ -99,6 +140,9 @@ public class MainActivity extends Activity implements View.OnClickListener,Media
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+        mSearchView = (SearchView) searchItem.getActionView();
+        mSearchView.setOnQueryTextListener(this);
         return true;
     }
 
@@ -110,9 +154,19 @@ public class MainActivity extends Activity implements View.OnClickListener,Media
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (id) {
+            case R.id.action_settings:
+
+                break;
+            case R.id.action_search:
+
+                break;
+            case R.id.select_folder:
+                Intent intent = new Intent(this,FileManagerActivity.class);
+                startActivityForResult(intent, GET_SONG_DATA);
+                break;
         }
+
 
         return super.onOptionsItemSelected(item);
     }
@@ -128,10 +182,10 @@ public class MainActivity extends Activity implements View.OnClickListener,Media
         }
     }
 
-    public void startPlay(SongData data){
+    public void startPlay(SongData data) {
         Log.d(TEST, "start play");
 
-        if(data!=null) {
+        if (data != null) {
             resetMP();
             try {
                 mMediaPlayer = new MediaPlayer();
@@ -144,10 +198,10 @@ public class MainActivity extends Activity implements View.OnClickListener,Media
                 Log.e(TEST, e.toString());
                 e.printStackTrace();
             }
-        }else{
-            if(mMediaPlayer!=null)  mMediaPlayer.start();
+        } else {
+            if (mMediaPlayer != null) mMediaPlayer.start();
         }
-        mPlay=true;
+        mPlay = true;
         mHandler.sendMessageDelayed(Message.obtain(mHandler, TICK_WHAT), 900);
         //init player control panel
         seekBar.setMax(mMediaPlayer.getDuration());
@@ -156,46 +210,53 @@ public class MainActivity extends Activity implements View.OnClickListener,Media
         Log.d(TEST, "time" + mMediaPlayer.getDuration());
         textProgress.setText(timeFormat(mMediaPlayer.getCurrentPosition()));
         playButton.setImageResource(R.drawable.pause_action);
-        songName.setText(data.getSongName());
-        authorName.setText(data.getAutor());
-        albumName.setText(data.getAlbum());
+        songName.setText(data.getTitle());
+        authorName.setText("Autor: " + data.getAutor());
+        albumName.setText("Album: " + data.getAlbum());
+
         mMediaPlayer.setLooping(loopButton.isChecked());
+        mMediaPlayer.setOnCompletionListener(this);
 
         //must be last string
         playerPult.setVisibility(View.VISIBLE);
     }
 
-    public void countFolder(){
+    /*public void countFolder() {
 
         //список папок
         do {
             folderSet.add(getFolder(mCursor.getString(mCursor
                     .getColumnIndex(MediaStore.Audio.Media.DATA))));
-            Log.d(TEST,mCursor.getString(mCursor
+            Log.d(TEST, mCursor.getString(mCursor
                     .getColumnIndex(MediaStore.Audio.Media.DATA)));
         } while (mCursor.moveToNext());
         //DELETEвивід списку
-        Iterator<String> iter =folderSet.iterator();
-        while(iter.hasNext()){
+        Iterator<String> iter = folderSet.iterator();
+        while (iter.hasNext()) {
             Log.d(TEST, iter.next());
         }
         //обчислення кількості
-        iter =folderSet.iterator();
-        while(iter.hasNext()){
-            String j = iter.next();
-            String []i= {("%/"+j+"/%"),("%/"+j+"/%/%")};
-            serchMedia(i);
-            list.add(new DirectoryData(i[0],mCursor.getCount()));
-            Log.d(TEST, i[0]+" = "+mCursor.getCount());
+        iter = folderSet.iterator();
+        while (iter.hasNext()) {
+            mPath = new StringBuilder();
+            mPath.append(iter.next());
+            mArgs.clear();
+            mArgs.add("%/" + mPath + "/%");
+            mArgs.add("%/" + mPath + "/%/%");
+            searchMedia(mArgs, null);
+            mDirectoryList.add(new DirectoryData(mPath.toString(), mCursor.getCount()));
+            Log.d(TEST, mArgs.get(0) + " = " + mCursor.getCount());
         }
 
-    }
+    }*/
 
-    public void serchMedia(String[] path){
+    public void searchMedia(LinkedList<String> path, String s) {
+        Cursor cursor;
         ContentResolver contentResolver = getContentResolver();
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         String[] projection = new String[]{
-                MediaStore.Audio.Media._COUNT,
+                MediaStore.Audio.Media._ID,
+                MediaStore.Audio.Media.DATA,
                 MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.Media.TITLE_KEY,
                 MediaStore.Audio.Media.ALBUM,
@@ -206,55 +267,56 @@ public class MainActivity extends Activity implements View.OnClickListener,Media
                 MediaStore.Audio.Media.DISPLAY_NAME
         };
         String selection = null;
-        if(path!=null){
-            selection=MediaStore.Audio.Media.DATA+" LIKE ? AND "
-                    + MediaStore.Audio.Media.DATA+" NOT LIKE ?";
-            Log.d(TEST, selection+"   "+path[0]);
+        if (path != null) {
+            selection = " ( "+MediaStore.Audio.Media.DATA + "  LIKE ? AND "
+                    + MediaStore.Audio.Media.DATA + " NOT LIKE ? )";
+            Log.d(TEST, selection + "   " + path.get(0));
+            if(s!=null){
+                selection +=" AND "+MediaStore.Audio.Media.TITLE + " LIKE ? ";
+                path.add(s);
+            }
+        }else{
+            if (s!=null) {
+                selection = MediaStore.Audio.Media.TITLE + " LIKE ? ";
+                path = new LinkedList<String>();
+                path.add(s);
+            }
         }
 
-        mCursor = contentResolver.query(uri, null, selection, path, null);
-        if (mCursor == null) {
-            Toast.makeText(this,"По вашому запиту нічого не знайдено",Toast.LENGTH_SHORT).show();
+        if(path!=null) {
+            Log.e(TEST, "path = " + path.toArray(new String[path.size()]).toString());
+            Log.e(TEST, "size = " + selection);
+            cursor = contentResolver.query(uri, null, selection, path.toArray(new String[path.size()]), null);
+        }else{
+            cursor = contentResolver.query(uri, null, selection, null, null);
+
+        }
+        if (cursor == null) {
+            Toast.makeText(this, "По вашому запиту нічого не знайдено", Toast.LENGTH_SHORT).show();
             // query failed, handle error.
-        } else if (!mCursor.moveToFirst()) {
-            Toast.makeText(this,"Нема музики на девайсі",Toast.LENGTH_LONG).show();
+        } else if (!cursor.moveToFirst()) {
+            Toast.makeText(this, "Нема музики на девайсі", Toast.LENGTH_LONG).show();
             // no media on the device
         } else {
+        //TODO: Change block
+            if(mCursor==null)  mCursor=cursor;
+           //mCursor=cursor;
+            if(mAdapter!=null) {
+                mAdapter.swapCursor(cursor);
+                mAdapter.notifyDataSetChanged();
+            }
 
-            //TODO: Change block
 
 
         }
     }
 
 
-    /**Return directory name from file path*/
-    public String getFolder(String s){
-        String path = new File(s).getParent();
-        return path.substring(path.lastIndexOf("/")+1);
-    }
 
-    public static String timeFormat(int millis) {
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(millis);
-        long minutes = seconds / 60;
-        seconds = seconds - minutes * 60;
-        return String.format("%01d:%02d", minutes, seconds);
-    }
-
-    public static String timeFormat(String millis) {
-        int value = 0;
-        try {
-            value = Integer.valueOf(millis);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e(TEST, e.toString());
-        }
-        return timeFormat(value);
-    }
 
     private Handler mHandler = new Handler() {
         public void handleMessage(Message m) {
-            if (mPlay==true) {
+            if (mPlay == true) {
                 //TODO: program update Player progress
                 setProgress();
                 sendMessageDelayed(Message.obtain(this, TICK_WHAT), 900);
@@ -265,7 +327,7 @@ public class MainActivity extends Activity implements View.OnClickListener,Media
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.move_loop:
                 mMediaPlayer.setLooping(loopButton.isChecked());
                 break;
@@ -278,20 +340,21 @@ public class MainActivity extends Activity implements View.OnClickListener,Media
             case R.id.move_stop:
                 mMediaPlayer.pause();
                 mMediaPlayer.seekTo(0);
+                playButton.setImageResource(R.drawable.play_action);
                 setProgress();
-                mPlay=false;
+                mPlay = false;
                 break;
             case R.id.move_play:
-                if(mMediaPlayer.isPlaying()){
+                if (mMediaPlayer.isPlaying()) {
                     mMediaPlayer.pause();
                     playButton.setImageResource(R.drawable.play_action);
                     setProgress();
-                    mPlay=false;
+                    mPlay = false;
 
-                }else{
+                } else {
                     mMediaPlayer.start();
                     playButton.setImageResource(R.drawable.pause_action);
-                    mPlay=true;
+                    mPlay = true;
                     mHandler.sendMessageDelayed(Message.obtain(mHandler, TICK_WHAT), 900);
                 }
                 break;
@@ -301,17 +364,54 @@ public class MainActivity extends Activity implements View.OnClickListener,Media
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        if(mPlay==true){
+        if (mPlay == true) {
 
-        }else{
+        } else {
             playButton.setImageResource(R.drawable.play_action);
         }
     }
 
-    private void setProgress(){
+    private void setProgress() {
         int i = mMediaPlayer.getCurrentPosition();
         textProgress.setText(timeFormat(i));
         seekBar.setProgress(i);
     }
 
+
+    public boolean onQueryTextChange(String newText) {
+        //TODO:is reserved
+        /*
+        if(!newText.isEmpty()) {
+            if(mPath!=null) {
+                mArgs.clear();
+                mArgs.add("%/" + mPath + "/%");
+                mArgs.add("%/" + mPath + "/%/%");
+                searchMedia(mArgs, "%"+newText+"%");
+            }else {
+                searchMedia(null, "%"+newText+"%");
+            }
+        }*/
+        return false;
+    }
+
+    public boolean onQueryTextSubmit(String query) {
+        if(!query.isEmpty()) {
+            if(mPath!=null) {
+                mArgs.clear();
+                mArgs.add("%/" + mPath + "/%");
+                mArgs.add("%/" + mPath + "/%/%");
+                searchMedia(mArgs, "%"+query+"%");
+            }else {
+                searchMedia(null, "%"+query+"%");
+            }
+        }else searchMedia(null, null);
+        return false;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode,Intent data){
+
+    }
 }
+
+
