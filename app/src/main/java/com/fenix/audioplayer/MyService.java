@@ -4,13 +4,12 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.Message;
-import android.provider.MediaStore;
 import android.util.Log;
 
 import com.fenix.audioplayer.data.SongData;
@@ -25,10 +24,12 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     private NotificationManager mNM;
     private MediaPlayer mMediaPlayer;
 
-
     private LinkedList<String> mListOfSong;
     private Integer mPosition;
     private Integer mProgress;
+    Notification notification;
+
+
 
 
     private int NOTIFICATION = R.string.local_service_started;
@@ -84,6 +85,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     @Override
     public void onDestroy() {
         // Cancel the persistent notification.
+        mMediaPlayer.release();
         mNM.cancel(NOTIFICATION);
 
         // Tell the user we stopped.
@@ -108,7 +110,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
 
 
         // Set the icon, scrolling text and timestamp
-        Notification notification = new Notification(R.drawable.play_action, text,
+        notification = new Notification(R.drawable.play_action, text,
                 System.currentTimeMillis());
 
         // The PendingIntent to launch our activity if the user selects this notification
@@ -120,7 +122,8 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
                 text, contentIntent);
 
         // Send the notification.
-        mNM.notify(NOTIFICATION, notification);
+
+        //mNM.notify(NOTIFICATION, notification);
     }
 
 
@@ -136,6 +139,9 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     }
 
     public void startPlay(Integer position) {
+
+
+        startForeground(100500,notification);
         mPlay = true;
         if (position != null) {
             mPosition = position;
@@ -146,12 +152,16 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
                 mMediaPlayer.setDataSource(mListOfSong.get(position));
                 mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 mMediaPlayer.prepare();
+
                 mMediaPlayer.start();
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
-            if (mMediaPlayer != null) mMediaPlayer.start();
+            if (mMediaPlayer != null) {
+                mMediaPlayer.start();
+            }
         }
 
 
@@ -160,15 +170,18 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     }
 
     public void stopPlay() {
+        stopForeground(true);
         mMediaPlayer.pause();
         mMediaPlayer.seekTo(0);
         mPlay = false;
     }
 
     public void pausePlay() {
+        stopForeground(true);
         mMediaPlayer.pause();
         mPlay = false;
     }
+
 
     public void setSongList(LinkedList<String> list) {
         mListOfSong = list;
@@ -210,4 +223,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     public void setPosition(Integer mPosition) {
         this.mPosition = mPosition;
     }
+
+
+
 }

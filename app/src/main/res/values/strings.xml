@@ -12,4 +12,5 @@
     <string name="action_search">Search</string>
     <string name="action_all_files">ALL AUDIO FILES</string>
     <string name="local_service_started">Service started</string>
+    <string name="title_activity_free_modul">FreeModul</string>
 </resources>

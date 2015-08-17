@@ -73,6 +73,9 @@ public class MainActivity extends Activity implements View.OnClickListener,
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        Intent intent = new Intent(this,MyService.class);
+        startService(intent);
+
         doBindService();
         searchMedia(null, null);
 
@@ -133,7 +136,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
         });
 
 
-        Intent intent = getIntent();
+        intent = getIntent();
         Uri data = intent.getData();
         if (data != null) {
             Log.d(TEST, "URI = " + data.getPath());
@@ -284,7 +287,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
                     public void run() {
                         mBoundService.setSongList(songList);
                     }
-                },2000);
+                },600);
             }else mBoundService.setSongList(songList);
 
 
@@ -299,20 +302,25 @@ public class MainActivity extends Activity implements View.OnClickListener,
                 Log.d(TEST, "activity = " + mPosition);
                 Log.d(TEST, "service = " + mBoundService.getPosition());
                 mPosition=mBoundService.getPosition();
+                Log.d(TEST, "service2 = " + mPosition);
                 seekBar.setMax(mBoundService.getDuration());
                 seekBar.setProgress(mBoundService.getProgress());
                 textDuration.setText(timeFormat(mBoundService.getDuration()));
                 textProgress.setText(timeFormat(mBoundService.getProgress()));
                 playButton.setImageResource(R.drawable.pause_action);
 
-                mCursor.move(mPosition);
+                Log.d(TEST, "service3 = " + mPosition);
+                mCursor.moveToPosition(mPosition);
+                Log.d(TEST, "service4 = " + mCursor.getPosition());
                 songName.setText(mCursor.getString(mCursor.
                         getColumnIndex(MediaStore.Audio.Media.TITLE)));
                 authorName.setText("Autor: " + mCursor.getString(mCursor.
                         getColumnIndex(MediaStore.Audio.Media.ARTIST)));
                 albumName.setText("Album: " + mCursor.getString(mCursor.
                         getColumnIndex(MediaStore.Audio.Media.ALBUM)));
-
+                mAdapter.setmData(mCursor.getString(mCursor.
+                        getColumnIndex(MediaStore.Audio.Media.DATA)));
+                mAdapter.notifyDataSetChanged();
                 mBoundService.setLooping(loopButton.isChecked());
                 playerPult.setVisibility(View.VISIBLE);
 
@@ -439,13 +447,13 @@ public class MainActivity extends Activity implements View.OnClickListener,
     void doUnbindService() {
         if (mIsBound) {
             unbindService(mConnection);
-
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mHandler.removeMessages(TICK_WHAT);
         doUnbindService();
     }
 }

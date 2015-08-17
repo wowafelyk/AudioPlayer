@@ -71,7 +71,7 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
                 cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA)),
                 cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)));
         data.setPosition(cursor.getPosition());
-        if(data.getDATA()==mData) {
+        if(data.getDATA().equals(mData)) {
             songHolder.button.setImageResource(R.drawable.play_action);
         }else songHolder.button.setImageResource(R.drawable.music_action);
 
