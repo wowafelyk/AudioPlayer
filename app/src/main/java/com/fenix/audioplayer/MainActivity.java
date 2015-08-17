@@ -1,13 +1,17 @@
 package com.fenix.audioplayer;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.os.Bundle;
@@ -25,27 +29,36 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.fenix.audioplayer.adapter.RecyclerCursorAdapter;
+import com.fenix.audioplayer.data.SongData;
+
 import java.io.IOException;
 import java.util.LinkedList;
 
-import static com.fenix.audioplayer.HelperClass.*;
+import static com.fenix.audioplayer.data.HelperClass.*;
 
 public class MainActivity extends Activity implements View.OnClickListener,
-        MediaPlayer.OnCompletionListener,SearchView.OnQueryTextListener {
+        MediaPlayer.OnCompletionListener, SearchView.OnQueryTextListener {
 
     private final static String TEST = "myTEST";
-    public final int REQUEST_FOLDER = 101;
-    public final int SEND_SONG_DATA = 102;
-    public final int GET_SONG_DATA = 103;
-
+    public final static int REQUEST_FOLDER = 101;
+    public final static int SEND_SONG_DATA = 102;
+    public final static int GET_SONG_DATA = 103;
+    public final static int STOP_SERVICE = 103;
+    public final static String FOLDER_NAME = "folder_name";
+    public final static String SEND_DATA = "send_data";
 
 
     private Cursor mCursor;
     private static MediaPlayer mMediaPlayer;
+    private MyService mBoundService;
     private boolean mPlay = false;
+    private boolean mIsBound = false;
     private static final int TICK_WHAT = 2;
-    private StringBuilder mPath;
-    private LinkedList<String> mArgs=new LinkedList<String>();
+    private String mPath;
+    private Integer mPosition;
+    private LinkedList<String> mArgs = new LinkedList<String>();
+    private String mData; //for storing playing song
     private ImageButton songButton;
     private ImageButton prevButton, nextButton, playButton, stopButton;
     private ToggleButton loopButton, randomButton;
@@ -61,21 +74,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        doBindService();
         searchMedia(null, null);
-        //countFolder();
-
-        //TODO: ActionBar FIX
-        /*try {
-            ViewConfiguration config = ViewConfiguration.get(this);
-            Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
-            if(menuKeyField != null) {
-                menuKeyField.setAccessible(true);
-                menuKeyField.setBoolean(config, false);
-            }
-        } catch (Exception ex) {
-
-        };*/
-
 
         //find view elements
         prevButton = (ImageButton) findViewById(R.id.move_prev);
@@ -95,13 +95,12 @@ public class MainActivity extends Activity implements View.OnClickListener,
         //Changes in view
         playerPult.setVisibility(View.GONE);
 
-
         //init RecyclerView
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         recyclerView.setHasFixedSize(true);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(linearLayoutManager);
-        mAdapter = new RecyclerCursorAdapter(this,mCursor);
+        mAdapter = new RecyclerCursorAdapter(this, mCursor);
         recyclerView.setAdapter(mAdapter);
         mAdapter.setOnItemClickListener(new RecyclerCursorAdapter.OnItemClickListener() {
             @Override
@@ -109,6 +108,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
                 if (songButton != null) {
                     songButton.setImageResource(R.drawable.music_action);
                 }
+                mAdapter.setmData(data.getDATA());
+                mPosition = data.getPosition();
                 songButton = (ImageButton) v;
                 songButton.setImageResource(R.drawable.play_action);
                 startPlay(data);
@@ -134,6 +135,24 @@ public class MainActivity extends Activity implements View.OnClickListener,
         });
 
 
+        Intent intent = getIntent();
+        Uri data = intent.getData();
+        if (data != null) {
+            Log.d(TEST, "URI = " + data.getPath());
+
+            Cursor c = getContentResolver().query(data, null, null, null, null);
+            mAdapter.swapCursor(c);
+            mAdapter.notifyDataSetChanged();
+            c.moveToFirst();
+            startPlay(new SongData(
+                    c.getString(c.getColumnIndex(MediaStore.Audio.Media.ARTIST)),
+                    c.getString(c.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)),
+                    c.getString(c.getColumnIndex(MediaStore.Audio.Media.ALBUM)),
+                    c.getString(c.getColumnIndex(MediaStore.Audio.Media.DATA)),
+                    c.getString(c.getColumnIndex(MediaStore.Audio.Media.TITLE))));
+        }
+
+
     }
 
     @Override
@@ -148,25 +167,23 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
         switch (id) {
             case R.id.action_settings:
-
                 break;
             case R.id.action_search:
-
                 break;
             case R.id.select_folder:
-                Intent intent = new Intent(this,FileManagerActivity.class);
-                startActivityForResult(intent, GET_SONG_DATA);
+                Intent intent = new Intent(this, FileManagerActivity.class);
+                startActivityForResult(intent, REQUEST_FOLDER);
+                break;
+            case R.id.action_all_file:
+                searchMedia(null, null);
                 break;
         }
-
 
         return super.onOptionsItemSelected(item);
     }
@@ -221,35 +238,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
         playerPult.setVisibility(View.VISIBLE);
     }
 
-    /*public void countFolder() {
-
-        //список папок
-        do {
-            folderSet.add(getFolder(mCursor.getString(mCursor
-                    .getColumnIndex(MediaStore.Audio.Media.DATA))));
-            Log.d(TEST, mCursor.getString(mCursor
-                    .getColumnIndex(MediaStore.Audio.Media.DATA)));
-        } while (mCursor.moveToNext());
-        //DELETEвивід списку
-        Iterator<String> iter = folderSet.iterator();
-        while (iter.hasNext()) {
-            Log.d(TEST, iter.next());
-        }
-        //обчислення кількості
-        iter = folderSet.iterator();
-        while (iter.hasNext()) {
-            mPath = new StringBuilder();
-            mPath.append(iter.next());
-            mArgs.clear();
-            mArgs.add("%/" + mPath + "/%");
-            mArgs.add("%/" + mPath + "/%/%");
-            searchMedia(mArgs, null);
-            mDirectoryList.add(new DirectoryData(mPath.toString(), mCursor.getCount()));
-            Log.d(TEST, mArgs.get(0) + " = " + mCursor.getCount());
-        }
-
-    }*/
-
     public void searchMedia(LinkedList<String> path, String s) {
         Cursor cursor;
         ContentResolver contentResolver = getContentResolver();
@@ -268,26 +256,26 @@ public class MainActivity extends Activity implements View.OnClickListener,
         };
         String selection = null;
         if (path != null) {
-            selection = " ( "+MediaStore.Audio.Media.DATA + "  LIKE ? AND "
+            selection = " ( " + MediaStore.Audio.Media.DATA + "  LIKE ? AND "
                     + MediaStore.Audio.Media.DATA + " NOT LIKE ? )";
             Log.d(TEST, selection + "   " + path.get(0));
-            if(s!=null){
-                selection +=" AND "+MediaStore.Audio.Media.TITLE + " LIKE ? ";
+            if (s != null) {
+                selection += " AND " + MediaStore.Audio.Media.TITLE + " LIKE ? ";
                 path.add(s);
             }
-        }else{
-            if (s!=null) {
+        } else {
+            if (s != null) {
                 selection = MediaStore.Audio.Media.TITLE + " LIKE ? ";
                 path = new LinkedList<String>();
                 path.add(s);
             }
         }
 
-        if(path!=null) {
+        if (path != null) {
             Log.e(TEST, "path = " + path.toArray(new String[path.size()]).toString());
             Log.e(TEST, "size = " + selection);
             cursor = contentResolver.query(uri, null, selection, path.toArray(new String[path.size()]), null);
-        }else{
+        } else {
             cursor = contentResolver.query(uri, null, selection, null, null);
 
         }
@@ -298,20 +286,23 @@ public class MainActivity extends Activity implements View.OnClickListener,
             Toast.makeText(this, "Нема музики на девайсі", Toast.LENGTH_LONG).show();
             // no media on the device
         } else {
-        //TODO: Change block
-            if(mCursor==null)  mCursor=cursor;
-           //mCursor=cursor;
-            if(mAdapter!=null) {
+            //TODO: Change block
+            if (mCursor == null) mCursor = cursor;
+            //mCursor=cursor;
+            if (mAdapter != null) {
                 mAdapter.swapCursor(cursor);
                 mAdapter.notifyDataSetChanged();
             }
+            mCursor.moveToFirst();
 
-
+            Log.d(TEST, "check " + mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
+            Log.d(TEST, "check " + mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media._ID)));
+            Log.d(TEST, "check " + mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE)));
+            Log.d(TEST, "check " + mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE_KEY)));
+            Log.d(TEST, "check " + mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TRACK)));
 
         }
     }
-
-
 
 
     private Handler mHandler = new Handler() {
@@ -362,10 +353,26 @@ public class MainActivity extends Activity implements View.OnClickListener,
         }
     }
 
+    //String autor, String songName, String album, String DATA, String Title
     @Override
     public void onCompletion(MediaPlayer mp) {
         if (mPlay == true) {
-
+            if (mCursor.moveToNext()) {
+                startPlay(new SongData(
+                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)),
+                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)),
+                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)),
+                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)),
+                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE))));
+            } else if (mCursor.getCount() > 2) {
+                mCursor.moveToFirst();
+                startPlay(new SongData(
+                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)),
+                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)),
+                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)),
+                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)),
+                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE))));
+            }
         } else {
             playButton.setImageResource(R.drawable.play_action);
         }
@@ -395,22 +402,66 @@ public class MainActivity extends Activity implements View.OnClickListener,
     }
 
     public boolean onQueryTextSubmit(String query) {
-        if(!query.isEmpty()) {
-            if(mPath!=null) {
+        if (query.length() > 1) {
+            if (mPath != null) {
                 mArgs.clear();
                 mArgs.add("%/" + mPath + "/%");
                 mArgs.add("%/" + mPath + "/%/%");
-                searchMedia(mArgs, "%"+query+"%");
-            }else {
-                searchMedia(null, "%"+query+"%");
+                searchMedia(mArgs, "%" + query + "%");
+            } else {
+                searchMedia(null, "%" + query + "%");
             }
-        }else searchMedia(null, null);
+        } else searchMedia(null, null);
         return false;
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode,Intent data){
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_FOLDER:
+                if (resultCode == RESULT_OK) {
+                    mPath = data.getStringExtra(FOLDER_NAME);
+                    if (mPath != null) {
+                        mArgs.clear();
+                        mArgs.add("%/" + mPath + "/%");
+                        mArgs.add("%/" + mPath + "/%/%");
+                        searchMedia(mArgs, null);
+                    }
+                }
+                break;
+        }
+    }
 
+    private ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            mBoundService = ((MyService.LocalBinder) service).getService();
+            mIsBound = true;
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+
+            mBoundService = null;
+            mIsBound = false;
+        }
+    };
+
+    void doBindService() {
+        boolean b = bindService(new Intent(this,
+                MyService.class), mConnection, Context.BIND_AUTO_CREATE);
+        mIsBound = true;
+    }
+
+    void doUnbindService() {
+        if (mIsBound) {
+            unbindService(mConnection);
+
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        doUnbindService();
     }
 }
 

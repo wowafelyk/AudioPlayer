@@ -1,4 +1,4 @@
-package com.fenix.audioplayer;
+package com.fenix.audioplayer.data;
 
 /**
  * Created by fenix on 15.08.2015.
@@ -9,6 +9,7 @@ public class SongData {
     private String album;
     private String DATA;
     private String Title;
+    private Integer mPosition;
 
     public SongData(String autor, String songName, String album, String DATA, String Title) {
         this.autor = autor;
@@ -16,6 +17,7 @@ public class SongData {
         this.album = album;
         this.DATA = DATA;
         this.Title=Title;
+
     }
 
     public SongData() {
@@ -59,5 +61,13 @@ public class SongData {
 
     public void setTitle(String title) {
         Title = title;
+    }
+
+    public Integer getPosition() {
+        return mPosition;
+    }
+
+    public void setPosition(Integer mPosition) {
+        this.mPosition = mPosition;
     }
 }

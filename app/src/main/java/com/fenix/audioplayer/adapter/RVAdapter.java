@@ -1,20 +1,19 @@
-package com.fenix.audioplayer;
+package com.fenix.audioplayer.adapter;
 
-import android.content.Context;
-import android.database.Cursor;
-import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.fenix.audioplayer.R;
+import com.fenix.audioplayer.data.DirectoryData;
+
 import java.util.LinkedList;
 
-import static com.fenix.audioplayer.HelperClass.timeFormat;
+import static com.fenix.audioplayer.data.HelperClass.timeFormat;
 
 /**
  * Created by fenix on 14.08.2015.
@@ -26,7 +25,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.DirHolder> {
     private OnItemClickListener mListener;
     private LinkedList<DirectoryData> mData;
 
-    RVAdapter(LinkedList<DirectoryData> data) {
+    public RVAdapter(LinkedList<DirectoryData> data) {
         this.mData = data;
     }
 

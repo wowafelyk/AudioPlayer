@@ -1,4 +1,4 @@
-package com.fenix.audioplayer;
+package com.fenix.audioplayer.data;
 
 /**
  * Created by fenix on 15.08.2015.

@@ -3,6 +3,7 @@ package com.fenix.audioplayer;
 import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
@@ -21,11 +22,15 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.fenix.audioplayer.adapter.RVAdapter;
+import com.fenix.audioplayer.adapter.RecyclerCursorAdapter;
+import com.fenix.audioplayer.data.DirectoryData;
+
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 
-import static com.fenix.audioplayer.HelperClass.*;
+import static com.fenix.audioplayer.data.HelperClass.*;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -37,7 +42,7 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
     private static final int FILE_LAYOUT = 2;
 
     private SimpleCursorAdapter mAdapter;
-    private ImageButton mBackButton;
+    private ImageButton mBackButton, mSongButton;
     private Button acceptButton, cancelButton;
     private TextView folderName;
     private LinearLayout rootFragmentLL;
@@ -96,12 +101,11 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
         mLinearLayoutManager = new LinearLayoutManager(getActivity());
         mItemRecyclerView.setLayoutManager(mLinearLayoutManager);
 
-        mCursorAdapter = new RecyclerCursorAdapter(getActivity(),mCursor);
+        mCursorAdapter = new RecyclerCursorAdapter(getActivity(), mCursor);
 
         rootFragmentLL.setVisibility(View.GONE);
         mDataAdapter = new RVAdapter(mDirectoryList);
         mItemRecyclerView.setAdapter(mDataAdapter);
-
 
 
         mDataAdapter.setOnItemClickListener(new RVAdapter.OnItemClickListener() {
@@ -123,7 +127,7 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState){
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         mCursor = searchMedia(null, null);
@@ -168,7 +172,7 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
             selection = " ( " + MediaStore.Audio.Media.DATA + "  LIKE ? AND "
                     + MediaStore.Audio.Media.DATA + " NOT LIKE ? )";
             Log.d(TEST, selection + "   " + path.get(0));
-        }else{
+        } else {
             path = new LinkedList<String>();
         }
         if (s != null) {
@@ -207,8 +211,14 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
                 mItemRecyclerView.setAdapter(mDataAdapter);
                 break;
             case R.id.button_Accept:
+                getActivity().setResult(
+                        getActivity().RESULT_OK,
+                        new Intent().putExtra(MainActivity.FOLDER_NAME, mPath));
+                getActivity().finish();
                 break;
             case R.id.button_Cancel:
+                getActivity().setResult(getActivity().RESULT_CANCELED);
+                getActivity().finish();
                 break;
             default:
                 return;

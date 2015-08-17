@@ -1,19 +1,21 @@
-package com.fenix.audioplayer;
+package com.fenix.audioplayer.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import com.fenix.audioplayer.R;
+import com.fenix.audioplayer.data.SongData;
+
 import lib.external.CursorRecyclerViewAdapter;
 
-import static com.fenix.audioplayer.HelperClass.*;
+import static com.fenix.audioplayer.data.HelperClass.*;
 
 /**
  * Created by fenix on 14.08.2015.
@@ -24,8 +26,17 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
     private final static String TEST = "myLog-RecyclerAdapter";
     private OnItemClickListener mListener;
     private Cursor cursor;
+    private String mData;
 
-    RecyclerCursorAdapter(Context context,Cursor cursor) {
+    public String getmData() {
+        return mData;
+    }
+
+    public void setmData(String mData) {
+        this.mData = mData;
+    }
+
+    public RecyclerCursorAdapter(Context context,Cursor cursor) {
         super(context,cursor);
         this.cursor = cursor;
     }
@@ -59,6 +70,10 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
                 cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)),
                 cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA)),
                 cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)));
+        data.setPosition(cursor.getPosition());
+        if(data.getDATA()==mData) {
+            songHolder.button.setImageResource(R.drawable.play_action);
+        }else songHolder.button.setImageResource(R.drawable.music_action);
 
         songHolder.songName.setText(data.getSongName());
         songHolder.autor.setText(data.getAutor());
@@ -66,7 +81,10 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
         songHolder.duration.setText(timeFormat(cursor.getString(
                 cursor.getColumnIndex(MediaStore.Audio.Media.DURATION))));
 
-        songHolder.button.setOnClickListener(new Listener(data));
+
+        if(mListener!=null) {
+            songHolder.button.setOnClickListener(new Listener(data));
+        }else songHolder.button.setClickable(false);
     }
 
     public static class SongHolder extends RecyclerView.ViewHolder {
@@ -84,6 +102,7 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
             album = (TextView) itemView.findViewById(R.id.textAlbum);
             album = (TextView) itemView.findViewById(R.id.textAlbum);
 
+
         }
     }
     class Listener implements View.OnClickListener {
@@ -97,6 +116,7 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
             if(mListener!=null) {
                 mListener.onItemClick(v, data);
             }
+
         }
     }
     //TODO:change metod

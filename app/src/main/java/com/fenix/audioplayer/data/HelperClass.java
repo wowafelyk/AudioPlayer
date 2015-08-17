@@ -1,4 +1,4 @@
-package com.fenix.audioplayer;
+package com.fenix.audioplayer.data;
 
 import android.util.Log;
 
