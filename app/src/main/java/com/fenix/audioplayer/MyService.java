@@ -10,18 +10,20 @@ import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Message;
+import android.provider.MediaStore;
 import android.util.Log;
+
+import com.fenix.audioplayer.data.SongData;
 
 import java.io.IOException;
 import java.util.LinkedList;
 
 import static com.fenix.audioplayer.data.HelperClass.timeFormat;
 
-public class MyService extends Service {
+public class MyService extends Service implements MediaPlayer.OnCompletionListener {
 
     private NotificationManager mNM;
     private MediaPlayer mMediaPlayer;
-
 
 
     private LinkedList<String> mListOfSong;
@@ -30,27 +32,42 @@ public class MyService extends Service {
 
 
     private int NOTIFICATION = R.string.local_service_started;
-    private boolean mPlay=false;
-    private boolean mLooping=false;
+    private boolean mPlay = false;
+    private boolean mLooping = false;
 
 
     private final String TEST = "myService";
 
 
-
-
     public MyService() {
     }
 
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+
+        if (mPlay == true) {
+
+            if ((mPosition+1)<mListOfSong.size()) {
+                Log.d(TEST,"onComplete"+mPosition.toString());
+                Log.d(TEST,"listZise "+mListOfSong.size());
+                startPlay(mPosition = mPosition + 1);
+            } else if (mListOfSong.size() >= 2) {
+                mPosition = 0;
+                startPlay(mPosition);
+            }
+        }
+    }
+
     public class LocalBinder extends Binder {
-        MyService getService(){
+        MyService getService() {
             return MyService.this;
         }
     }
 
     @Override
     public void onCreate() {
-        mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        mListOfSong = new LinkedList<String>();
 
         // Display a notification about us starting.  We put an icon in the status bar.
         showNotification();
@@ -107,7 +124,6 @@ public class MyService extends Service {
     }
 
 
-
     private void resetMP() {
         if (mMediaPlayer != null) {
             try {
@@ -120,12 +136,12 @@ public class MyService extends Service {
     }
 
     public void startPlay(Integer position) {
-
-        Log.d(TEST, "start play");
-        if(position!=null){
-            mPosition=position;
+        mPlay = true;
+        if (position != null) {
+            mPosition = position;
+            Log.d(TEST, mPosition.toString());
             resetMP();
-            try{
+            try {
                 mMediaPlayer = new MediaPlayer();
                 mMediaPlayer.setDataSource(mListOfSong.get(position));
                 mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -137,12 +153,10 @@ public class MyService extends Service {
         } else {
             if (mMediaPlayer != null) mMediaPlayer.start();
         }
-        mPlay = true;
 
 
         mMediaPlayer.setLooping(mLooping);
-        //TODO: set onCompletionListener
-        //mMediaPlayer.setOnCompletionListener(this);
+        mMediaPlayer.setOnCompletionListener(this);
     }
 
     public void stopPlay() {
@@ -151,20 +165,49 @@ public class MyService extends Service {
         mPlay = false;
     }
 
-    public void pausePlay(){
+    public void pausePlay() {
         mMediaPlayer.pause();
         mPlay = false;
     }
 
     public void setSongList(LinkedList<String> list) {
-        mListOfSong=list;
+        mListOfSong = list;
     }
 
-    public void setProgress(int i){
-        mProgress = i;
+    public void setSong(String song) {
+        mListOfSong.add(song);
     }
 
-    public void getProgress(int i){
+    public void setProgress(int i) {
         mProgress = i;
+        mMediaPlayer.seekTo(mProgress);
+    }
+
+    public int getProgress() {
+        return mMediaPlayer.getCurrentPosition();
+    }
+
+    public int getDuration() {
+        return mMediaPlayer.getDuration();
+    }
+
+    public boolean isLooping() {
+        return mLooping;
+    }
+
+    public boolean isPlay() {
+        return mPlay;
+    }
+
+    public void setLooping(boolean mLooping) {
+        this.mLooping = mLooping;
+    }
+
+    public Integer getPosition() {
+        return mPosition;
+    }
+
+    public void setPosition(Integer mPosition) {
+        this.mPosition = mPosition;
     }
 }

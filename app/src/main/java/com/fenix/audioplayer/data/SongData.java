@@ -20,6 +20,11 @@ public class SongData {
 
     }
 
+    public SongData(String autor, String songName, String album, String DATA, String Title,Integer mPosition) {
+        this(autor, songName, album, DATA, Title);
+        this.mPosition=mPosition;
+    }
+
     public SongData() {
     }
 

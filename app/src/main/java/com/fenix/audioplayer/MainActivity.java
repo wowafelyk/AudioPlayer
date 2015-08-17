@@ -38,9 +38,9 @@ import java.util.LinkedList;
 import static com.fenix.audioplayer.data.HelperClass.*;
 
 public class MainActivity extends Activity implements View.OnClickListener,
-        MediaPlayer.OnCompletionListener, SearchView.OnQueryTextListener {
+        SearchView.OnQueryTextListener {
 
-    private final static String TEST = "myTEST";
+    private final static String TEST = "mySerActivity";
     public final static int REQUEST_FOLDER = 101;
     public final static int SEND_SONG_DATA = 102;
     public final static int GET_SONG_DATA = 103;
@@ -50,7 +50,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
 
     private Cursor mCursor;
-    private static MediaPlayer mMediaPlayer;
     private MyService mBoundService;
     private boolean mPlay = false;
     private boolean mIsBound = false;
@@ -128,9 +127,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                if (mMediaPlayer != null) {
-                    mMediaPlayer.seekTo(seekBar.getProgress());
-                }
+                mBoundService.setProgress(seekBar.getProgress());
+
             }
         });
 
@@ -149,7 +147,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
                     c.getString(c.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)),
                     c.getString(c.getColumnIndex(MediaStore.Audio.Media.ALBUM)),
                     c.getString(c.getColumnIndex(MediaStore.Audio.Media.DATA)),
-                    c.getString(c.getColumnIndex(MediaStore.Audio.Media.TITLE))));
+                    c.getString(c.getColumnIndex(MediaStore.Audio.Media.TITLE)), 0));
+
         }
 
 
@@ -188,51 +187,30 @@ public class MainActivity extends Activity implements View.OnClickListener,
         return super.onOptionsItemSelected(item);
     }
 
-    private void resetMP() {
-        if (mMediaPlayer != null) {
-            try {
-                mMediaPlayer.reset();
-                mMediaPlayer = null;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     public void startPlay(SongData data) {
         Log.d(TEST, "start play");
 
         if (data != null) {
-            resetMP();
-            try {
-                mMediaPlayer = new MediaPlayer();
-                mMediaPlayer.setDataSource(data.getDATA());
-                mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                mMediaPlayer.prepare();
-                mMediaPlayer.start();
-            } catch (IOException e) {
-
-                Log.e(TEST, e.toString());
-                e.printStackTrace();
-            }
+             //mBoundService.setSong(data.getDATA());
+             Log.d(TEST, " "+data.getPosition());
+             mBoundService.startPlay(data.getPosition());
         } else {
-            if (mMediaPlayer != null) mMediaPlayer.start();
+            mBoundService.startPlay(null);
         }
         mPlay = true;
         mHandler.sendMessageDelayed(Message.obtain(mHandler, TICK_WHAT), 900);
         //init player control panel
-        seekBar.setMax(mMediaPlayer.getDuration());
-        seekBar.setProgress(mMediaPlayer.getCurrentPosition());
-        textDuration.setText(timeFormat(mMediaPlayer.getDuration()));
-        Log.d(TEST, "time" + mMediaPlayer.getDuration());
-        textProgress.setText(timeFormat(mMediaPlayer.getCurrentPosition()));
+        seekBar.setMax(mBoundService.getDuration());
+        seekBar.setProgress(mBoundService.getProgress());
+        textDuration.setText(timeFormat(mBoundService.getDuration()));
+        Log.d(TEST, "time" + mBoundService.getDuration());
+        textProgress.setText(timeFormat(mBoundService.getProgress()));
         playButton.setImageResource(R.drawable.pause_action);
         songName.setText(data.getTitle());
         authorName.setText("Autor: " + data.getAutor());
         albumName.setText("Album: " + data.getAlbum());
 
-        mMediaPlayer.setLooping(loopButton.isChecked());
-        mMediaPlayer.setOnCompletionListener(this);
+        mBoundService.setLooping(loopButton.isChecked());
 
         //must be last string
         playerPult.setVisibility(View.VISIBLE);
@@ -293,13 +271,23 @@ public class MainActivity extends Activity implements View.OnClickListener,
                 mAdapter.swapCursor(cursor);
                 mAdapter.notifyDataSetChanged();
             }
-            mCursor.moveToFirst();
+            cursor.moveToFirst();
+            final LinkedList<String> songList = new LinkedList<String>();
+            do{
+                songList.add(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
+            }while(cursor.moveToNext());
 
-            Log.d(TEST, "check " + mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
-            Log.d(TEST, "check " + mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media._ID)));
-            Log.d(TEST, "check " + mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE)));
-            Log.d(TEST, "check " + mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE_KEY)));
-            Log.d(TEST, "check " + mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TRACK)));
+            if(mBoundService==null){
+                mHandler.postDelayed(new Runnable(){
+
+                    @Override
+                    public void run() {
+                        mBoundService.setSongList(songList);
+                    }
+                },2000);
+            }else mBoundService.setSongList(songList);
+
+
 
         }
     }
@@ -307,8 +295,31 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
     private Handler mHandler = new Handler() {
         public void handleMessage(Message m) {
-            if (mPlay == true) {
+            if(mBoundService.getPosition()!=mPosition){
+                Log.d(TEST, "activity = " + mPosition);
+                Log.d(TEST, "service = " + mBoundService.getPosition());
+                mPosition=mBoundService.getPosition();
+                seekBar.setMax(mBoundService.getDuration());
+                seekBar.setProgress(mBoundService.getProgress());
+                textDuration.setText(timeFormat(mBoundService.getDuration()));
+                textProgress.setText(timeFormat(mBoundService.getProgress()));
+                playButton.setImageResource(R.drawable.pause_action);
+
+                mCursor.move(mPosition);
+                songName.setText(mCursor.getString(mCursor.
+                        getColumnIndex(MediaStore.Audio.Media.TITLE)));
+                authorName.setText("Autor: " + mCursor.getString(mCursor.
+                        getColumnIndex(MediaStore.Audio.Media.ARTIST)));
+                albumName.setText("Album: " + mCursor.getString(mCursor.
+                        getColumnIndex(MediaStore.Audio.Media.ALBUM)));
+
+                mBoundService.setLooping(loopButton.isChecked());
+                playerPult.setVisibility(View.VISIBLE);
+
+            }
+            if (mBoundService.isPlay()) {
                 //TODO: program update Player progress
+
                 setProgress();
                 sendMessageDelayed(Message.obtain(this, TICK_WHAT), 900);
             }
@@ -320,7 +331,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.move_loop:
-                mMediaPlayer.setLooping(loopButton.isChecked());
+                mBoundService.setLooping(loopButton.isChecked());
                 break;
             case R.id.move_next:
                 break;
@@ -329,21 +340,21 @@ public class MainActivity extends Activity implements View.OnClickListener,
             case R.id.move_random:
                 break;
             case R.id.move_stop:
-                mMediaPlayer.pause();
-                mMediaPlayer.seekTo(0);
+                mBoundService.stopPlay();
+                //mMediaPlayer.seekTo(0);
                 playButton.setImageResource(R.drawable.play_action);
                 setProgress();
                 mPlay = false;
                 break;
             case R.id.move_play:
-                if (mMediaPlayer.isPlaying()) {
-                    mMediaPlayer.pause();
+                if (mBoundService.isPlay()) {
+                    mBoundService.pausePlay();
                     playButton.setImageResource(R.drawable.play_action);
                     setProgress();
                     mPlay = false;
 
                 } else {
-                    mMediaPlayer.start();
+                    mBoundService.startPlay(null);
                     playButton.setImageResource(R.drawable.pause_action);
                     mPlay = true;
                     mHandler.sendMessageDelayed(Message.obtain(mHandler, TICK_WHAT), 900);
@@ -353,33 +364,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
         }
     }
 
-    //String autor, String songName, String album, String DATA, String Title
-    @Override
-    public void onCompletion(MediaPlayer mp) {
-        if (mPlay == true) {
-            if (mCursor.moveToNext()) {
-                startPlay(new SongData(
-                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)),
-                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)),
-                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)),
-                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)),
-                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE))));
-            } else if (mCursor.getCount() > 2) {
-                mCursor.moveToFirst();
-                startPlay(new SongData(
-                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)),
-                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)),
-                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)),
-                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)),
-                        mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE))));
-            }
-        } else {
-            playButton.setImageResource(R.drawable.play_action);
-        }
-    }
-
     private void setProgress() {
-        int i = mMediaPlayer.getCurrentPosition();
+        int i = mBoundService.getProgress();
         textProgress.setText(timeFormat(i));
         seekBar.setProgress(i);
     }
@@ -439,7 +425,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
         }
 
         public void onServiceDisconnected(ComponentName className) {
-
             mBoundService = null;
             mIsBound = false;
         }
