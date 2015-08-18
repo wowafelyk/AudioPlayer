@@ -130,14 +130,15 @@
                     android:text="@string/button_loop"
                     android:textOff=""
                     android:textOn=""
-                    android:checked="false" />
+                    android:checked="false"
+                    android:onClick="onClick" />
                 />
 
 
         </LinearLayout>
 
         <RelativeLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:measureWithLargestChild="false"
@@ -151,7 +152,8 @@
                 android:src="@drawable/prev_audio_action"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true" />
+                android:layout_alignParentStart="true"
+                android:layout_margin="@dimen/pult_button_margin" />
 
             <ImageButton
                 android:id="@+id/move_play"
@@ -162,7 +164,8 @@
                 android:src="@drawable/play_action"
                 android:layout_alignParentTop="true"
                 android:layout_toRightOf="@+id/move_prev"
-                android:layout_toEndOf="@+id/move_prev" />
+                android:layout_toEndOf="@+id/move_prev"
+                android:layout_margin="@dimen/pult_button_margin" />
 
             <ImageButton
                 android:id="@+id/move_next"
@@ -172,7 +175,8 @@
                 android:src="@drawable/next_audio_action"
                 android:layout_alignParentTop="true"
                 android:layout_toRightOf="@+id/move_play"
-                android:layout_toEndOf="@+id/move_play" />
+                android:layout_toEndOf="@+id/move_play"
+                android:layout_margin="@dimen/pult_button_margin" />
 
             <ImageButton
                 android:id="@+id/move_stop"
@@ -182,22 +186,9 @@
                 android:src="@drawable/stop_action"
                 android:layout_alignParentTop="true"
                 android:layout_toRightOf="@+id/move_next"
-                android:layout_toEndOf="@+id/move_next" />
+                android:layout_toEndOf="@+id/move_next"
+                android:layout_margin="@dimen/pult_button_margin" />
 
-            <ToggleButton
-                android:id="@+id/move_random"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/randombutton"
-                android:focusable="false"
-                android:focusableInTouchMode="false"
-                android:text="@string/button_random"
-                android:textOff=""
-                android:textOn=""
-                android:checked="false"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true" />
         </RelativeLayout>
 
     </LinearLayout>

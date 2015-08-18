@@ -12,12 +12,15 @@
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <data android:mimeType="audio/*" />
                 <data android:mimeType="application/ogg" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -29,16 +32,12 @@
         <service
             android:name=".MyService"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true" >
         </service>
 
         <activity
-            android:name=".FreeModule.FreeModul"
-            android:label="@string/title_activity_free_modul"
-            android:parentActivityName=".MainActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.fenix.audioplayer.MainActivity" />
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings" >
         </activity>
     </application>
 

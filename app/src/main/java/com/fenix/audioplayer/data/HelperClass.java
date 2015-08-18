@@ -30,4 +30,7 @@ public class HelperClass {
         }
         return timeFormat(value);
     }
+    public static void getPrefs(){
+
+    }
 }

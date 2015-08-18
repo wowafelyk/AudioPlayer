@@ -103,7 +103,8 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
      */
     private void showNotification() {
         // In this sample, we'll use the same text for the ticker and the expanded notification
-        CharSequence text = getText(R.string.local_service_started);
+
+        CharSequence text = "Playing songs";
 
         //Notification notification = new Notification.Builder(this)
         //        .setContentTitle()
@@ -118,7 +119,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
                 new Intent(this, MainActivity.class), 0);
 
         // Set the info for the views that show in the notification panel.
-        notification.setLatestEventInfo(this, "some text46536",
+        notification.setLatestEventInfo(this, "AudioPlyer",
                 text, contentIntent);
 
         // Send the notification.
@@ -188,6 +189,8 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     }
 
     public void setSong(String song) {
+
+        mListOfSong = new LinkedList<String>();
         mListOfSong.add(song);
     }
 
@@ -212,8 +215,10 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
         return mPlay;
     }
 
-    public void setLooping(boolean mLooping) {
+    public void setLoop(boolean mLooping) {
         this.mLooping = mLooping;
+        Log.d(TEST, "loop"+mLooping);
+        mMediaPlayer.setLooping(mLooping);
     }
 
     public Integer getPosition() {

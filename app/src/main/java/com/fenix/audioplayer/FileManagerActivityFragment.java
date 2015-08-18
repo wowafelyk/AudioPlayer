@@ -5,9 +5,11 @@ import android.app.LoaderManager;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -53,6 +55,7 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
     private RecyclerCursorAdapter mCursorAdapter;
     private LinearLayoutManager mLinearLayoutManager;
     private LinkedList<String> mArgs = new LinkedList<String>();
+    private static String sSortingOrder;
     private String mPath;
 
     private LinkedHashSet<String> folderSet = new LinkedHashSet<String>();
@@ -115,6 +118,23 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
                 mArgs.clear();
                 mArgs.add("%/" + s + "/%");
                 mArgs.add("%/" + s + "/%/%");
+
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                boolean asc = prefs.getBoolean(getString(R.string.pref_sort_order), true);
+                String m = prefs.getString(getString(R.string.pref_list_sort), "1");
+                if(m.equals("1")) {
+                    Log.d(TEST,"sort "+m+"   "+asc);
+                    sSortingOrder = asc ? " " + MediaStore.Audio.Media.DISPLAY_NAME + " " + "ASC" :
+                            " " + MediaStore.Audio.Media.DISPLAY_NAME + " " + "DESC";
+                }else if(m.equals("0")) {
+                    sSortingOrder = asc ? " " + MediaStore.Audio.Media.ARTIST + " " + " ASC" :
+                            " " + MediaStore.Audio.Media.ARTIST + " " + " DESC";
+                }else if(m.equals("2")){
+
+                    sSortingOrder= asc ?" "+MediaStore.Audio.Media.ALBUM+" "+" ASC":
+                            " "+MediaStore.Audio.Media.ALBUM+" "+" DESC";
+                }
+
 
                 mCursorAdapter.swapCursor(searchMedia(mArgs, null));
 
@@ -184,9 +204,9 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
             path.add(s);
         }
         if (path != null) {
-            cursor = contentResolver.query(uri, projection, selection, path.toArray(new String[path.size()]), null);
+            cursor = contentResolver.query(uri, projection, selection, path.toArray(new String[path.size()]), sSortingOrder);
         } else {
-            cursor = contentResolver.query(uri, null, selection, null, null);
+            cursor = contentResolver.query(uri, projection, selection, null, sSortingOrder);
 
         }
         if (cursor == null) {
@@ -224,33 +244,6 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
                 return;
         }
     }
-
-    /*public SimpleAdapter createAdapter(Context context, LinkedList<DirectoryData> data) {
-        final String ATTR_FOLDER_NAME = "attr_name";
-        final String ATTR_FILE_COUNT = "attr_count";
-        ArrayList<Map<String, Object>> mListData = new ArrayList<Map<String, Object>>(data.size());
-        Map<String, Object> m;
-        for (int i = 0; i < data.size(); i++) {
-            m = new HashMap<String, Object>();
-            m.put(ATTR_FOLDER_NAME, data.get(i).getFolderName());
-            m.put(ATTR_FILE_COUNT, data.get(i).getCount());
-            mListData.add(m);
-        }
-
-        String[] from = {ATTR_FOLDER_NAME, ATTR_FILE_COUNT};
-        int[] to = {R.id.element_folderName, R.id.element_fileCount};
-        return new SimpleAdapter(context, mListData, R.layout.folder_layout, from, to);
-    }
-
-    public SimpleCursorAdapter createAdapter(Context context, Cursor c) {
-        final static String[] coumns = new String {
-            MediaStore.Audio.Media.DISPLAY_NAME,
-                    MediaStore.Audio.Media.ARTIST,
-                    MediaStore.Audio.Media.ALBUM,
-                    MediaStore.Audio.Media.DURATION
-        } ;
-    } */
-
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
