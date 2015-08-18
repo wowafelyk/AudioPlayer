@@ -27,6 +27,8 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     private LinkedList<String> mListOfSong;
     private Integer mPosition;
     private Integer mProgress;
+    private String mPath;
+    private String mQuery;
     Notification notification;
 
 
@@ -115,8 +117,8 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
                 System.currentTimeMillis());
 
         // The PendingIntent to launch our activity if the user selects this notification
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, MainActivity.class), 0);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, MainActivity.GET_SONG_DATA,
+                new Intent(this, MainActivity.class).putExtra("extra",true), 0);
 
         // Set the info for the views that show in the notification panel.
         notification.setLatestEventInfo(this, "AudioPlyer",
@@ -229,6 +231,19 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
         this.mPosition = mPosition;
     }
 
+    public String getmPath() {
+        return mPath;
+    }
 
+    public void setmPath(String mPath) {
+        this.mPath = mPath;
+    }
 
+    public String getmQuery() {
+        return mQuery;
+    }
+
+    public void setmQuery(String mQuery) {
+        this.mQuery = mQuery;
+    }
 }

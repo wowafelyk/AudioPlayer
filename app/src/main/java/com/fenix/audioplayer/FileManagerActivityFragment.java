@@ -119,23 +119,6 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
                 mArgs.add("%/" + s + "/%");
                 mArgs.add("%/" + s + "/%/%");
 
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                boolean asc = prefs.getBoolean(getString(R.string.pref_sort_order), true);
-                String m = prefs.getString(getString(R.string.pref_list_sort), "1");
-                if(m.equals("1")) {
-                    Log.d(TEST,"sort "+m+"   "+asc);
-                    sSortingOrder = asc ? " " + MediaStore.Audio.Media.DISPLAY_NAME + " " + "ASC" :
-                            " " + MediaStore.Audio.Media.DISPLAY_NAME + " " + "DESC";
-                }else if(m.equals("0")) {
-                    sSortingOrder = asc ? " " + MediaStore.Audio.Media.ARTIST + " " + " ASC" :
-                            " " + MediaStore.Audio.Media.ARTIST + " " + " DESC";
-                }else if(m.equals("2")){
-
-                    sSortingOrder= asc ?" "+MediaStore.Audio.Media.ALBUM+" "+" ASC":
-                            " "+MediaStore.Audio.Media.ALBUM+" "+" DESC";
-                }
-
-
                 mCursorAdapter.swapCursor(searchMedia(mArgs, null));
 
                 folderName.setText(mPath);
@@ -185,6 +168,23 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
     }
 
     public Cursor searchMedia(LinkedList<String> path, String s) {
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        boolean asc = prefs.getBoolean(getString(R.string.pref_sort_order), true);
+        String m = prefs.getString(getString(R.string.pref_list_sort), "1");
+        if(m.equals("1")) {
+            Log.d(TEST,"sort "+m+"   "+asc);
+            sSortingOrder = asc ? " " + MediaStore.Audio.Media.DISPLAY_NAME + " " + "ASC" :
+                    " " + MediaStore.Audio.Media.DISPLAY_NAME + " " + "DESC";
+        }else if(m.equals("0")) {
+            sSortingOrder = asc ? " " + MediaStore.Audio.Media.ARTIST + " " + " ASC" :
+                    " " + MediaStore.Audio.Media.ARTIST + " " + " DESC";
+        }else if(m.equals("2")){
+
+            sSortingOrder= asc ?" "+MediaStore.Audio.Media.ALBUM+" "+" ASC":
+                    " "+MediaStore.Audio.Media.ALBUM+" "+" DESC";
+        }
+
         Cursor cursor;
         ContentResolver contentResolver = getActivity().getContentResolver();
         String selection = null;
@@ -241,8 +241,8 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
                 getActivity().finish();
                 break;
             default:
-                return;
         }
+        return;
     }
 
     @Override

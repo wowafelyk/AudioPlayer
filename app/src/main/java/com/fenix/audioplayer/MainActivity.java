@@ -46,6 +46,9 @@ public class MainActivity extends Activity implements View.OnClickListener,
     public final static int STOP_SERVICE = 103;
     public final static String FOLDER_NAME = "folder_name";
     public final static String SEND_DATA = "send_data";
+    public final static String QUERY = "query";
+    public final static String PATH = "path";
+
 
 
     private Cursor mCursor;
@@ -81,7 +84,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
         intent = getIntent();
         Uri data = intent.getData();
         if (data != null) {
-            Log.d(TEST, "URI = " + data.getPath());
 
             final Cursor c = getContentResolver().query(data, null, null, null, null);
             mCursor = c;
@@ -136,7 +138,9 @@ public class MainActivity extends Activity implements View.OnClickListener,
         playerPult = (LinearLayout) findViewById(R.id.playerPult);
 
         //Changes in view
-        playerPult.setVisibility(View.GONE);
+        if(!getIntent().hasExtra("extra")) {
+            playerPult.setVisibility(View.GONE);
+        }
 
         //init RecyclerView
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
@@ -173,8 +177,21 @@ public class MainActivity extends Activity implements View.OnClickListener,
             public void onStopTrackingTouch(SeekBar seekBar) {
                 mBoundService.setProgress(seekBar.getProgress());
 
+
             }
         });
+
+        //Changes in view
+        if(!getIntent().hasExtra("extra")) {
+            playerPult.setVisibility(View.GONE);
+            mHandler.sendMessageDelayed(Message.obtain(mHandler, TICK_WHAT), 500);
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+
+                }
+            },600);
+        }
 
 
     }
@@ -205,7 +222,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
             case R.id.select_folder:
                 intent = new Intent(this, FileManagerActivity.class);
                 startActivityForResult(intent, REQUEST_FOLDER);
-                startActivity(intent);
                 break;
             case R.id.action_all_file:
                 searchMedia(null, null);
@@ -350,8 +366,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
                     }
                 }, 300);
             } else mBoundService.setSongList(songList);
-
-
         }
     }
 
@@ -514,6 +528,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TEST, "it's working");
         switch (requestCode) {
             case REQUEST_FOLDER:
                 if (resultCode == RESULT_OK) {
@@ -526,6 +541,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
                     }
                 }
                 break;
+
         }
     }
 
