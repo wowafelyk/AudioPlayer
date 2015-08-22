@@ -1,5 +1,9 @@
 package com.fenix.audioplayer.data;
 
+import android.database.Cursor;
+import android.provider.MediaStore;
+import android.util.Log;
+
 /**
  * Created by fenix on 15.08.2015.
  */
@@ -7,26 +11,39 @@ public class SongData {
     private String autor;
     private String songName;
     private String album;
-    private String DATA;
+    private String data;
     private String Title;
     private Integer mPosition;
 
-    public SongData(String autor, String songName, String album, String DATA, String Title) {
+    private final static String TEST = "mySerActivity";
+
+    public SongData(String autor, String songName, String album, String data, String Title) {
         this.autor = autor;
         this.songName = songName;
         this.album = album;
-        this.DATA = DATA;
-        this.Title=Title;
-
+        this.data = data;
+        this.Title = Title;
     }
 
-    public SongData(String autor, String songName, String album, String DATA, String Title,Integer mPosition) {
-        this(autor, songName, album, DATA, Title);
-        this.mPosition=mPosition;
+    public SongData(String autor, String songName, String album, String data, String Title,Integer mPosition) {
+        this.autor = autor;
+        this.songName = songName;
+        this.album = album;
+        this.data = data;
+        this.Title = Title;
     }
 
-    public SongData() {
+    //WARNING: MOVE CURSOR TO POSITION BEFORE USING CONSTRUCTOR
+    public SongData(Cursor c, Integer mPosition) {
+        this(c.getString(c.getColumnIndex(MediaStore.Audio.Media.ARTIST)),
+                c.getString(c.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)),
+                c.getString(c.getColumnIndex(MediaStore.Audio.Media.ALBUM)),
+                c.getString(c.getColumnIndex(MediaStore.Audio.Media.DATA)),
+                c.getString(c.getColumnIndex(MediaStore.Audio.Media.TITLE)));
+        Log.e(TEST, "Handler4");
+        this.mPosition = mPosition;
     }
+
 
     public String getAutor() {
         return autor;
@@ -52,12 +69,12 @@ public class SongData {
         this.album = album;
     }
 
-    public String getDATA() {
-        return DATA;
+    public String getData() {
+        return data;
     }
 
-    public void setDATA(String DATA) {
-        this.DATA = DATA;
+    public void setData(String data) {
+        this.data = data;
     }
 
     public String getTitle() {

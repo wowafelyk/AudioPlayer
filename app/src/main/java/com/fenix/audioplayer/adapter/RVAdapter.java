@@ -19,7 +19,7 @@ import static com.fenix.audioplayer.data.HelperClass.timeFormat;
  * Created by fenix on 14.08.2015.
  */
 public class RVAdapter extends RecyclerView.Adapter<RVAdapter.DirHolder> {
-    //TODO: add OnClickListener
+
 
     private final static String TEST = "myLog-RecyclerAdapter";
     private OnItemClickListener mListener;
@@ -41,7 +41,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.DirHolder> {
     @Override
     public DirHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
         View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.folder_layout, viewGroup, false);
-        //TODO: set layout parameters
+
         DirHolder dirHolder = new DirHolder(v);
 
         return dirHolder;
@@ -53,10 +53,8 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.DirHolder> {
         DirectoryData d = mData.get(i);
         dirHolder.folderName.setText(d.getFolderName());
         dirHolder.duration.setText(""+d.getCount());
-
         dirHolder.rootOnClick.setOnClickListener(new Listener(d.getFolderName()));
     }
-
 
 
     @Override
@@ -67,10 +65,8 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.DirHolder> {
 
     public static class DirHolder extends RecyclerView.ViewHolder {
 
-
         TextView folderName, duration;
         RelativeLayout rootOnClick;
-
 
         public DirHolder(View itemView) {
             super(itemView);
@@ -90,8 +86,9 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.DirHolder> {
             mListener.onItemClick(v,folderName);
         }
     }
-    //TODO:change metod
-    public void setData(LinkedList<DirectoryData> d,boolean b){
+
+    //TODO:change delete if not need
+    /*public void setData(LinkedList<DirectoryData> d,boolean b){
         if(b==true) {
             mData.clear();
             this.mData = d;
@@ -100,5 +97,5 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.DirHolder> {
             mData.addAll(d);
             notifyDataSetChanged();
         }
-    }
+    } */
 }

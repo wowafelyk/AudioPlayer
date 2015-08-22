@@ -9,6 +9,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -48,7 +49,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
     public final static String SEND_DATA = "send_data";
     public final static String QUERY = "query";
     public final static String PATH = "path";
-
+    //private final String SAVE_BUNDLE_SONG_STARTED = "bundle_song_started";
+    public Integer intTEST = 1;
 
 
     private Cursor mCursor;
@@ -56,10 +58,9 @@ public class MainActivity extends Activity implements View.OnClickListener,
     private boolean mPlay = false;
     private boolean mIsBound = false;
     private static final int TICK_WHAT = 2;
-    private static String mPath;
+    private static String sPath;
     private static String sQuery;
     private static Integer mPosition;
-    private LinkedList<String> mArgs = new LinkedList<String>();
     private static String sSortingOrder;
     private String mData; //for storing playing song
     private ImageButton songButton;
@@ -70,58 +71,51 @@ public class MainActivity extends Activity implements View.OnClickListener,
     private SearchView mSearchView;
     private RecyclerCursorAdapter mAdapter;
     private LinearLayout playerPult;
-    //private LinkedHashSet<String> folderSet = new LinkedHashSet<String>();
-    //private LinkedList<DirectoryData> mDirectoryList = new LinkedList<>();
+    private String[] mProjection = new String[]{
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.DATA,
+            MediaStore.Audio.Media.TITLE,
+            MediaStore.Audio.Media.TITLE_KEY,
+            MediaStore.Audio.Media.ALBUM,
+            MediaStore.Audio.Media.ALBUM_KEY,
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ARTIST_KEY,
+            MediaStore.Audio.Media.DURATION,
+            MediaStore.Audio.Media.DISPLAY_NAME
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-
-        Intent intent = new Intent(this, MyService.class);
-        startService(intent);
-        intent = getIntent();
-        Uri data = intent.getData();
-        if (data != null) {
-
-            final Cursor c = getContentResolver().query(data, null, null, null, null);
-            mCursor = c;
-            mAdapter = new RecyclerCursorAdapter(this, mCursor);
-
-            mAdapter.notifyDataSetChanged();
-            c.moveToFirst();
-
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mBoundService.setSong(c.getString(c.getColumnIndex(MediaStore.Audio.Media.DATA)));
-                    startPlay(new SongData(
-                            c.getString(c.getColumnIndex(MediaStore.Audio.Media.ARTIST)),
-                            c.getString(c.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)),
-                            c.getString(c.getColumnIndex(MediaStore.Audio.Media.ALBUM)),
-                            c.getString(c.getColumnIndex(MediaStore.Audio.Media.DATA)),
-                            c.getString(c.getColumnIndex(MediaStore.Audio.Media.TITLE)), 0));
-
-                }
-            }, 500);
-
-
-        } else {
-            mArgs.clear();
-            if (mPath != null) {
-                Log.d("static = ", mPath);
-
-                mArgs.add("%/" + mPath + "/%");
-                mArgs.add("%/" + mPath + "/%/%");
-                searchMedia(mArgs, sQuery);
-            } else {
-                searchMedia(null, sQuery);
-            }
-        }
-
+        /**     Start and bind to service    */
         doBindService();
 
+        /**     woks with data from intent-filter */
+        String dataString = getIntent().getDataString();
+        if (dataString != null) {
+            if (dataString.contains("content://media")) {
+                Uri uri = getIntent().getData();
+                final Cursor c = getContentResolver().query(uri, null, null, null, null);
+                mCursor = c;
+
+                mAdapter.notifyDataSetChanged();
+                if(savedInstanceState==null) {
+                    mHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            c.moveToFirst();
+                            mBoundService.setSong(c.getString(c.getColumnIndex(MediaStore.Audio.Media.DATA)));
+                            startPlay(new SongData(c, 0));
+                        }
+                    }, 100);
+                }
+            }
+        } else {
+                searchMedia(getArgs(sPath), sQuery);
+        }
 
         //find view elements
         prevButton = (ImageButton) findViewById(R.id.move_prev);
@@ -138,8 +132,15 @@ public class MainActivity extends Activity implements View.OnClickListener,
         playerPult = (LinearLayout) findViewById(R.id.playerPult);
 
         //Changes in view
-        if(!getIntent().hasExtra("extra")) {
+        if (!getIntent().hasExtra("extra")) {
             playerPult.setVisibility(View.GONE);
+            mHandler.sendMessageDelayed(Message.obtain(mHandler, TICK_WHAT), 500);
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+
+                }
+            }, 600);
         }
 
         //init RecyclerView
@@ -155,7 +156,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
                 if (songButton != null) {
                     songButton.setImageResource(R.drawable.music_action);
                 }
-                mAdapter.setmData(data.getDATA());
+                mAdapter.setmData(data.getData());
                 mPosition = data.getPosition();
                 songButton = (ImageButton) v;
                 songButton.setImageResource(R.drawable.play_action);
@@ -176,23 +177,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 mBoundService.setProgress(seekBar.getProgress());
-
-
             }
         });
-
-        //Changes in view
-        if(!getIntent().hasExtra("extra")) {
-            playerPult.setVisibility(View.GONE);
-            mHandler.sendMessageDelayed(Message.obtain(mHandler, TICK_WHAT), 500);
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-
-                }
-            },600);
-        }
-
 
     }
 
@@ -236,7 +222,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
         Log.d(TEST, "start play");
 
         if (data != null) {
-            //mBoundService.setSong(data.getDATA());
+            //mBoundService.setSong(data.getData());
             Log.d(TEST, " " + data.getPosition());
 
             mBoundService.startPlay(data.getPosition());
@@ -263,12 +249,15 @@ public class MainActivity extends Activity implements View.OnClickListener,
         playerPult.setVisibility(View.VISIBLE);
     }
 
+
     public void searchMedia(LinkedList<String> path, String s) {
 
         //reading preferences
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean asc = prefs.getBoolean(getString(R.string.pref_sort_order), true);
         String m = prefs.getString(getString(R.string.pref_list_sort), "1");
+
+        //set sSortingOrder
         if (m.equals("1")) {
             Log.d(TEST, "sort " + m + "   " + asc);
             sSortingOrder = asc ? " " + MediaStore.Audio.Media.DISPLAY_NAME + " " + "ASC" :
@@ -277,7 +266,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
             sSortingOrder = asc ? " " + MediaStore.Audio.Media.ARTIST + " " + " ASC" :
                     " " + MediaStore.Audio.Media.ARTIST + " " + " DESC";
         } else if (m.equals("2")) {
-
             sSortingOrder = asc ? " " + MediaStore.Audio.Media.ALBUM + " " + " ASC" :
                     " " + MediaStore.Audio.Media.ALBUM + " " + " DESC";
         }
@@ -285,19 +273,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
         Cursor cursor;
         ContentResolver contentResolver = getContentResolver();
+
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        String[] projection = new String[]{
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.DATA,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.TITLE_KEY,
-                MediaStore.Audio.Media.ALBUM,
-                MediaStore.Audio.Media.ALBUM_KEY,
-                MediaStore.Audio.Media.ARTIST,
-                MediaStore.Audio.Media.ARTIST_KEY,
-                MediaStore.Audio.Media.DURATION,
-                MediaStore.Audio.Media.DISPLAY_NAME
-        };
         String selection = null;
         if (path != null) {
             selection = " ( " + MediaStore.Audio.Media.DATA + "  LIKE ? AND "
@@ -330,9 +307,9 @@ public class MainActivity extends Activity implements View.OnClickListener,
             Log.e(TEST, "path = " + path.toArray(new String[path.size()]).toString());
             Log.e(TEST, "size3 = " + selection);
             System.err.println("query " + selection);
-            cursor = contentResolver.query(uri, projection, selection, path.toArray(new String[path.size()]), sSortingOrder);
+            cursor = contentResolver.query(uri, null, selection, path.toArray(new String[path.size()]), sSortingOrder);
         } else {
-            cursor = contentResolver.query(uri, projection, selection, null, sSortingOrder);
+            cursor = contentResolver.query(uri, null, selection, null, sSortingOrder);
             System.err.println("query " + selection);
             Log.e(TEST, "size4 = " + selection);
 
@@ -345,13 +322,26 @@ public class MainActivity extends Activity implements View.OnClickListener,
             // no media on the device
         } else {
             //TODO: Change block
-            //if (mCursor == null) mCursor = cursor;
-            mCursor = cursor;
+            if (mCursor == null) mCursor = cursor;
+
+            //mCursor = cursor;
+            Log.e(TEST, "Cursor = " + mCursor.getCount());
             if (mAdapter != null) {
                 mAdapter.swapCursor(cursor);
                 mAdapter.notifyDataSetChanged();
             }
+            Log.e(TEST, "Cursor = " + mCursor.getCount());
             cursor.moveToFirst();
+            Log.e(TEST, "DATA = " + cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
+            Log.e(TEST, "DATA1 = " + cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)));
+            Log.e(TEST, "DATA2 = " + Environment.getExternalStorageDirectory());
+
+            Log.e(TEST, "DATA4 = " + uri);
+
+            //08-22 19:30:25.190  26744-26744/com.fenix.audioplayer E/mySerActivity﹕ DATA = /storage/external_SD/Music/ACDC - Black Ice/ACDC - Anything Goes.mp3
+            //08-22 19:30:25.190  26744-26744/com.fenix.audioplayer E/mySerActivity﹕ DATA = ACDC - Anything Goes.mp3
+            //file:///sdcard/Music/Обійми.mp3
+
             final LinkedList<String> songList = new LinkedList<String>();
             do {
                 songList.add(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
@@ -416,7 +406,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
                 mBoundService.setLoop(loopButton.isChecked());
                 break;
             case R.id.move_next:
-                Log.d(TEST, "pos = "+ mPosition);
+                Log.d(TEST, "pos = " + mPosition);
                 cursorMoveTo(mPosition + 1);
 
                 playButton.setImageResource(R.drawable.pause_action);
@@ -424,7 +414,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
                 mHandler.sendMessageDelayed(Message.obtain(mHandler, TICK_WHAT), 400);
                 break;
             case R.id.move_prev:
-                Log.d(TEST, "pos = "+ mPosition);;
+                Log.d(TEST, "pos = " + mPosition);
+                ;
                 cursorMoveTo(mPosition - 1);
 
                 playButton.setImageResource(R.drawable.pause_action);
@@ -494,33 +485,28 @@ public class MainActivity extends Activity implements View.OnClickListener,
         seekBar.setProgress(i);
     }
 
+    private LinkedList<String> getArgs(String localPath) {
+        LinkedList<String> args = new LinkedList<String>();
+        if (localPath != null) {
+            args.add("%/" + sPath + "/%");
+            args.add("%/" + sPath + "/%/%");
+            return args;
+        } else {
+            return null;
+        }
+    }
+
 
     public boolean onQueryTextChange(String newText) {
         //TODO:is reserved
-        /*
-        if(!newText.isEmpty()) {
-            if(mPath!=null) {
-                mArgs.clear();
-                mArgs.add("%/" + mPath + "/%");
-                mArgs.add("%/" + mPath + "/%/%");
-                searchMedia(mArgs, "%"+newText+"%");
-            }else {
-                searchMedia(null, "%"+newText+"%");
-            }
-        }*/
         return false;
     }
 
     public boolean onQueryTextSubmit(String query) {
         if (query.length() > 0) {
-            if (mPath != null) {
-                mArgs.clear();
-                mArgs.add("%/" + mPath + "/%");
-                mArgs.add("%/" + mPath + "/%/%");
-                searchMedia(mArgs, "%" + query + "%");
-            } else {
-                searchMedia(null, "%" + query + "%");
-            }
+
+            searchMedia(getArgs(sPath), "%" + query + "%");
+
             sQuery = "%" + query + "%";
         } else searchMedia(null, null);
         return false;
@@ -532,18 +518,14 @@ public class MainActivity extends Activity implements View.OnClickListener,
         switch (requestCode) {
             case REQUEST_FOLDER:
                 if (resultCode == RESULT_OK) {
-                    mPath = data.getStringExtra(FOLDER_NAME);
-                    if (mPath != null) {
-                        mArgs.clear();
-                        mArgs.add("%/" + mPath + "/%");
-                        mArgs.add("%/" + mPath + "/%/%");
-                        searchMedia(mArgs, null);
-                    }
+                    sPath = data.getStringExtra(FOLDER_NAME);
+                    searchMedia(getArgs(sPath), null);
                 }
                 break;
-
         }
     }
+
+
 
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
@@ -557,9 +539,11 @@ public class MainActivity extends Activity implements View.OnClickListener,
         }
     };
 
+
     void doBindService() {
-        boolean b = bindService(new Intent(this,
-                MyService.class), mConnection, Context.BIND_AUTO_CREATE);
+        Intent intent = new Intent(this, MyService.class);
+        startService(intent);
+        boolean b = bindService(intent, mConnection, Context.BIND_ABOVE_CLIENT);
         mIsBound = true;
     }
 
@@ -580,6 +564,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt("playerPult", playerPult.getVisibility());
+        //outState.putBoolean(SAVE_BUNDLE_SONG_STARTED,false);
     }
 
 
@@ -589,6 +574,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
         if (onRestore.getInt("playerPult", View.VISIBLE) == View.VISIBLE) {
             playerPult.setVisibility(View.VISIBLE);
         } else playerPult.setVisibility(View.GONE);
+
         mHandler.sendMessageDelayed(Message.obtain(mHandler, TICK_WHAT), 500);
 
         mHandler.postDelayed(new Runnable() {
@@ -615,12 +601,11 @@ public class MainActivity extends Activity implements View.OnClickListener,
                     mAdapter.notifyDataSetChanged();
                     mBoundService.setLoop(loopButton.isChecked());
                 }
-
             }
-
 
         }, 500);
     }
+
 
 }
 
