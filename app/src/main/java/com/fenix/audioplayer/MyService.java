@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
@@ -29,9 +30,8 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     private Integer mProgress;
     private String mPath;
     private String mQuery;
+    private Uri mUri;
     Notification notification;
-
-
 
 
     private int NOTIFICATION = R.string.local_service_started;
@@ -50,9 +50,9 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
 
         if (mPlay == true) {
 
-            if ((mPosition+1)<mListOfSong.size()) {
-                Log.d(TEST,"onComplete"+mPosition.toString());
-                Log.d(TEST,"listZise "+mListOfSong.size());
+            if ((mPosition + 1) < mListOfSong.size()) {
+                Log.d(TEST, "onComplete" + mPosition.toString());
+                Log.d(TEST, "listZise " + mListOfSong.size());
                 startPlay(mPosition = mPosition + 1);
             } else if (mListOfSong.size() >= 2) {
                 mPosition = 0;
@@ -118,7 +118,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
 
         // The PendingIntent to launch our activity if the user selects this notification
         PendingIntent contentIntent = PendingIntent.getActivity(this, MainActivity.GET_SONG_DATA,
-                new Intent(this, MainActivity.class).putExtra("extra",true), 0);
+                new Intent(this, MainActivity.class).putExtra("extra", true), 0);
 
         // Set the info for the views that show in the notification panel.
         notification.setLatestEventInfo(this, "AudioPlyer",
@@ -144,7 +144,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     public void startPlay(Integer position) {
 
 
-        startForeground(100500,notification);
+        startForeground(100500, notification);
         mPlay = true;
         if (position != null) {
             mPosition = position;
@@ -155,9 +155,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
                 mMediaPlayer.setDataSource(mListOfSong.get(position));
                 mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 mMediaPlayer.prepare();
-
                 mMediaPlayer.start();
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -186,12 +184,23 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     }
 
 
-    public void setSongList(LinkedList<String> list) {
+    public void setSongList(LinkedList<String> list, String mQuery, String mPath) {
+        mUri = null;
+        this.mQuery = mQuery;
+        this.mPath = mPath;
         mListOfSong = list;
     }
 
-    public void setSong(String song) {
+    public void setSong(String song, Uri mUri) {
+        this.mUri = mUri;
+        mListOfSong = new LinkedList<String>();
+        mListOfSong.add(song);
+    }
 
+    public void setSong(String song, String mQuery, String mPath) {
+        mUri = null;
+        this.mQuery = mQuery;
+        this.mPath = mPath;
         mListOfSong = new LinkedList<String>();
         mListOfSong.add(song);
     }
@@ -219,7 +228,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
 
     public void setLoop(boolean mLooping) {
         this.mLooping = mLooping;
-        Log.d(TEST, "loop"+mLooping);
+        Log.d(TEST, "loop" + mLooping);
         mMediaPlayer.setLooping(mLooping);
     }
 
@@ -231,19 +240,23 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
         this.mPosition = mPosition;
     }
 
-    public String getmPath() {
+    public String getPath() {
         return mPath;
     }
 
-    public void setmPath(String mPath) {
+    public void setPath(String mPath) {
         this.mPath = mPath;
     }
 
-    public String getmQuery() {
+    public String getQuery() {
         return mQuery;
     }
 
-    public void setmQuery(String mQuery) {
+    public void setQuery(String mQuery) {
         this.mQuery = mQuery;
+    }
+
+    public Uri getUri() {
+        return mUri;
     }
 }

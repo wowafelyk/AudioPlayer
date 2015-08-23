@@ -33,6 +33,9 @@ import android.widget.ToggleButton;
 import com.fenix.audioplayer.adapter.RecyclerCursorAdapter;
 import com.fenix.audioplayer.data.SongData;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.LinkedList;
 
 import static com.fenix.audioplayer.data.HelperClass.*;
@@ -64,13 +67,15 @@ public class MainActivity extends Activity implements View.OnClickListener,
     private static String sSortingOrder;
     private String mData; //for storing playing song
     private ImageButton songButton;
-    private ImageButton prevButton, nextButton, playButton, stopButton;
+    private ImageButton playButton;
     private ToggleButton loopButton, randomButton;
     private TextView textProgress, textDuration, songName, authorName, albumName;
     private SeekBar seekBar;
     private SearchView mSearchView;
     private RecyclerCursorAdapter mAdapter;
     private LinearLayout playerPult;
+
+
     private String[] mProjection = new String[]{
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.DATA,
@@ -90,38 +95,55 @@ public class MainActivity extends Activity implements View.OnClickListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
+        Log.e(TEST,"Check1");
+
         /**     Start and bind to service    */
         doBindService();
 
         /**     woks with data from intent-filter */
-        String dataString = getIntent().getDataString();
+        final String dataString = Uri.decode(getIntent().getDataString());
         if (dataString != null) {
             if (dataString.contains("content://media")) {
-                Uri uri = getIntent().getData();
+                final Uri uri = getIntent().getData();
                 final Cursor c = getContentResolver().query(uri, null, null, null, null);
                 mCursor = c;
-
-                mAdapter.notifyDataSetChanged();
-                if(savedInstanceState==null) {
+                if (savedInstanceState == null) {
                     mHandler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
                             c.moveToFirst();
-                            mBoundService.setSong(c.getString(c.getColumnIndex(MediaStore.Audio.Media.DATA)));
+                            mBoundService.setSong(c.getString(
+                                    c.getColumnIndex(MediaStore.Audio.Media.DATA)), uri);
                             startPlay(new SongData(c, 0));
                         }
                     }, 100);
                 }
-            }
+            } else if (dataString.contains("file:")) {
+                sPath = getFolder(dataString);
+                sQuery = dataString.substring(dataString.lastIndexOf("/") + 1);
+                searchMedia(getArgs(sPath),sQuery);
+                if (savedInstanceState == null) {
+                    mHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            mCursor.moveToFirst();
+                            mBoundService.setSong(mCursor.getString(
+                                    mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)), sPath, sQuery);
+                            startPlay(new SongData(mCursor, 0));
+                        }
+                    }, 100);
+                }
+            } else Toast.makeText(this, "ПОМИЛКА - файл не знайдено", Toast.LENGTH_LONG).show();
+            ;
         } else {
-                searchMedia(getArgs(sPath), sQuery);
+            searchMedia(getArgs(sPath), sQuery);
         }
 
         //find view elements
-        prevButton = (ImageButton) findViewById(R.id.move_prev);
-        nextButton = (ImageButton) findViewById(R.id.move_next);
+        //prevButton = (ImageButton) findViewById(R.id.move_prev);
+        //nextButton = (ImageButton) findViewById(R.id.move_next);
         playButton = (ImageButton) findViewById(R.id.move_play);
-        stopButton = (ImageButton) findViewById(R.id.move_stop);
+        //stopButton = (ImageButton) findViewById(R.id.move_stop);
         loopButton = (ToggleButton) findViewById(R.id.move_loop);
         seekBar = (SeekBar) findViewById(R.id.seekBar);
         textDuration = (TextView) findViewById(R.id.text_duration);
@@ -132,7 +154,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
         playerPult = (LinearLayout) findViewById(R.id.playerPult);
 
         //Changes in view
-        if (!getIntent().hasExtra("extra")) {
+        //TODO: check if need
+        /*if (!getIntent().hasExtra("extra")) {
             playerPult.setVisibility(View.GONE);
             mHandler.sendMessageDelayed(Message.obtain(mHandler, TICK_WHAT), 500);
             mHandler.postDelayed(new Runnable() {
@@ -141,7 +164,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
                 }
             }, 600);
-        }
+        }*/
 
         //init RecyclerView
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
@@ -203,8 +226,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
                 Intent intent = new Intent(this, SettingsActivity.class);
                 startActivity(intent);
                 break;
-            case R.id.action_search:
-                break;
             case R.id.select_folder:
                 intent = new Intent(this, FileManagerActivity.class);
                 startActivityForResult(intent, REQUEST_FOLDER);
@@ -215,18 +236,13 @@ public class MainActivity extends Activity implements View.OnClickListener,
                 break;
         }
 
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
     public void startPlay(SongData data) {
-        Log.d(TEST, "start play");
 
         if (data != null) {
-            //mBoundService.setSong(data.getData());
-            Log.d(TEST, " " + data.getPosition());
-
             mBoundService.startPlay(data.getPosition());
-
         } else {
             mBoundService.startPlay(null);
         }
@@ -236,21 +252,19 @@ public class MainActivity extends Activity implements View.OnClickListener,
         seekBar.setMax(mBoundService.getDuration());
         seekBar.setProgress(mBoundService.getProgress());
         textDuration.setText(timeFormat(mBoundService.getDuration()));
-        Log.d(TEST, "time" + mBoundService.getDuration());
         textProgress.setText(timeFormat(mBoundService.getProgress()));
         playButton.setImageResource(R.drawable.pause_action);
-        songName.setText(data.getTitle());
+        songName.setText(data.getData());
         authorName.setText("Autor: " + data.getAutor());
         albumName.setText("Album: " + data.getAlbum());
 
         mBoundService.setLoop(loopButton.isChecked());
-
         //must be last string
         playerPult.setVisibility(View.VISIBLE);
     }
 
 
-    public void searchMedia(LinkedList<String> path, String s) {
+    public void searchMedia(LinkedList<String> path, String quest) {
 
         //reading preferences
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -270,49 +284,37 @@ public class MainActivity extends Activity implements View.OnClickListener,
                     " " + MediaStore.Audio.Media.ALBUM + " " + " DESC";
         }
 
-
         Cursor cursor;
         ContentResolver contentResolver = getContentResolver();
-
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         String selection = null;
         if (path != null) {
             selection = " ( " + MediaStore.Audio.Media.DATA + "  LIKE ? AND "
                     + MediaStore.Audio.Media.DATA + " NOT LIKE ? )";
             Log.d(TEST, selection + "   " + path.get(0));
-            if (s != null) {
+            if (quest != null) {
                 selection += " AND ((" + MediaStore.Audio.Media.DISPLAY_NAME + " LIKE ? "
                         + " ) OR ( " + MediaStore.Audio.Media.ARTIST + " LIKE ? "
                         + " ) OR ( " + MediaStore.Audio.Media.ALBUM + " LIKE ? )) ";
-                path.add(s);
-                path.add(s);
-                path.add(s);
-                Log.e(TEST, "size1 = " + selection);
+                path.add(quest);
+                path.add(quest);
+                path.add(quest);
             }
+            cursor = contentResolver.query(uri, mProjection, selection,
+                    path.toArray(new String[path.size()]), sSortingOrder);
         } else {
-            if (s != null) {
+            path = new LinkedList<String>();
+            if (quest != null) {
                 selection = " ( " + MediaStore.Audio.Media.DISPLAY_NAME + " LIKE ?  )" +
                         " OR ( " + MediaStore.Audio.Media.ARTIST + " LIKE ? " + " ) " +
                         " OR ( " + MediaStore.Audio.Media.ALBUM + " LIKE ? ) ";
-                path = new LinkedList<String>();
-                path.add(s);
-                path.add(s);
-                path.add(s);
-                Log.e(TEST, "size2 = " + selection);
-                System.err.println(selection);
+
+                path.add(quest);
+                path.add(quest);
+                path.add(quest);
             }
-        }
-
-        if (path != null) {
-            Log.e(TEST, "path = " + path.toArray(new String[path.size()]).toString());
-            Log.e(TEST, "size3 = " + selection);
-            System.err.println("query " + selection);
-            cursor = contentResolver.query(uri, null, selection, path.toArray(new String[path.size()]), sSortingOrder);
-        } else {
-            cursor = contentResolver.query(uri, null, selection, null, sSortingOrder);
-            System.err.println("query " + selection);
-            Log.e(TEST, "size4 = " + selection);
-
+            cursor = contentResolver.query(uri, mProjection, selection,
+                    path.toArray(new String[path.size()]), sSortingOrder);
         }
         if (cursor == null) {
             Toast.makeText(this, "По вашому запиту нічого не знайдено", Toast.LENGTH_SHORT).show();
@@ -321,27 +323,15 @@ public class MainActivity extends Activity implements View.OnClickListener,
             Toast.makeText(this, "Нема музики на девайсі", Toast.LENGTH_LONG).show();
             // no media on the device
         } else {
-            //TODO: Change block
-            if (mCursor == null) mCursor = cursor;
 
-            //mCursor = cursor;
-            Log.e(TEST, "Cursor = " + mCursor.getCount());
+            //if (mCursor == null) mCursor = cursor;
+            mCursor = cursor;
             if (mAdapter != null) {
                 mAdapter.swapCursor(cursor);
                 mAdapter.notifyDataSetChanged();
             }
-            Log.e(TEST, "Cursor = " + mCursor.getCount());
+
             cursor.moveToFirst();
-            Log.e(TEST, "DATA = " + cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
-            Log.e(TEST, "DATA1 = " + cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)));
-            Log.e(TEST, "DATA2 = " + Environment.getExternalStorageDirectory());
-
-            Log.e(TEST, "DATA4 = " + uri);
-
-            //08-22 19:30:25.190  26744-26744/com.fenix.audioplayer E/mySerActivity﹕ DATA = /storage/external_SD/Music/ACDC - Black Ice/ACDC - Anything Goes.mp3
-            //08-22 19:30:25.190  26744-26744/com.fenix.audioplayer E/mySerActivity﹕ DATA = ACDC - Anything Goes.mp3
-            //file:///sdcard/Music/Обійми.mp3
-
             final LinkedList<String> songList = new LinkedList<String>();
             do {
                 songList.add(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
@@ -349,13 +339,12 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
             if (mBoundService == null) {
                 mHandler.postDelayed(new Runnable() {
-
                     @Override
                     public void run() {
-                        mBoundService.setSongList(songList);
+                        mBoundService.setSongList(songList, sPath, sQuery);
                     }
-                }, 300);
-            } else mBoundService.setSongList(songList);
+                }, 200);
+            } else mBoundService.setSongList(songList, sPath, sQuery);
         }
     }
 
@@ -514,7 +503,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d(TEST, "it's working");
+        Log.e(TEST, "Check2");
         switch (requestCode) {
             case REQUEST_FOLDER:
                 if (resultCode == RESULT_OK) {
@@ -524,7 +513,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
                 break;
         }
     }
-
 
 
     private ServiceConnection mConnection = new ServiceConnection() {
