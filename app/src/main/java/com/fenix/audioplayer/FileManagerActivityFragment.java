@@ -231,8 +231,7 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
                 mItemRecyclerView.setAdapter(mDataAdapter);
                 break;
             case R.id.button_Accept:
-                getActivity().setResult(
-                        getActivity().RESULT_OK,
+                getActivity().setResult(getActivity().RESULT_OK,
                         new Intent().putExtra(MainActivity.FOLDER_NAME, mPath));
                 getActivity().finish();
                 break;

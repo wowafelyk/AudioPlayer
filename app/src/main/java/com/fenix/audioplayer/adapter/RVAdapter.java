@@ -13,8 +13,6 @@ import com.fenix.audioplayer.data.DirectoryData;
 
 import java.util.LinkedList;
 
-import static com.fenix.audioplayer.data.HelperClass.timeFormat;
-
 /**
  * Created by fenix on 14.08.2015.
  */

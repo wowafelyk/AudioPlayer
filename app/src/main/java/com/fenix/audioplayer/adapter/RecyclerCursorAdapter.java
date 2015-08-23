@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,7 +70,8 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
                 cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)),
                 cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)),
                 cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA)),
-                cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)));
+                cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)),
+                cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
         data.setPosition(cursor.getPosition());
         if(data.getData().equals(mData)) {
             songHolder.button.setImageResource(R.drawable.play_action);
@@ -78,7 +80,7 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
         songHolder.songName.setText(data.getSongName());
         songHolder.autor.setText(data.getAutor());
         songHolder.album.setText(data.getAlbum());
-        songHolder.duration.setText(timeFormat(cursor.getString(
+        songHolder.duration.setText(timeFormatMillis(cursor.getString(
                 cursor.getColumnIndex(MediaStore.Audio.Media.DURATION))));
 
 
@@ -119,7 +121,7 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
 
         }
     }
-    //TODO:change metod
+    //TODO:change method
     public void setCursor(Cursor c){
         this.cursor=c;
     }

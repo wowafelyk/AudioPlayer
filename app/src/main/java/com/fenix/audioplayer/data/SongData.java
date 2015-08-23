@@ -12,25 +12,28 @@ public class SongData {
     private String songName;
     private String album;
     private String data;
-    private String Title;
+    private String title;
+    private String duration;
     private Integer mPosition;
 
     private final static String TEST = "mySerActivity";
 
-    public SongData(String autor, String songName, String album, String data, String Title) {
+    public SongData(String autor, String songName, String album, String data, String title, String duration) {
         this.autor = autor;
         this.songName = songName;
         this.album = album;
         this.data = data;
-        this.Title = Title;
+        this.title = title;
+        this.duration=duration;
     }
 
-    public SongData(String autor, String songName, String album, String data, String Title,Integer mPosition) {
+    public SongData(String autor, String songName, String album, String data, String Title,String duration,Integer mPosition) {
         this.autor = autor;
         this.songName = songName;
         this.album = album;
         this.data = data;
-        this.Title = Title;
+        this.title = Title;
+        this.duration=duration;
     }
 
     //WARNING: MOVE CURSOR TO POSITION BEFORE USING CONSTRUCTOR
@@ -39,8 +42,8 @@ public class SongData {
                 c.getString(c.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)),
                 c.getString(c.getColumnIndex(MediaStore.Audio.Media.ALBUM)),
                 c.getString(c.getColumnIndex(MediaStore.Audio.Media.DATA)),
-                c.getString(c.getColumnIndex(MediaStore.Audio.Media.TITLE)));
-        Log.e(TEST, "Handler4");
+                c.getString(c.getColumnIndex(MediaStore.Audio.Media.TITLE)),
+                c.getString(c.getColumnIndex(MediaStore.Audio.Media.DURATION)));
         this.mPosition = mPosition;
     }
 
@@ -78,11 +81,11 @@ public class SongData {
     }
 
     public String getTitle() {
-        return Title;
+        return title;
     }
 
     public void setTitle(String title) {
-        Title = title;
+        this.title = title;
     }
 
     public Integer getPosition() {
@@ -91,5 +94,9 @@ public class SongData {
 
     public void setPosition(Integer mPosition) {
         this.mPosition = mPosition;
+    }
+
+    public String getDuration() {
+        return duration;
     }
 }

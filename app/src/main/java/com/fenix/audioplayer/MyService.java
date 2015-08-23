@@ -4,21 +4,19 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
+import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.fenix.audioplayer.data.SongData;
-
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.LinkedList;
-
-import static com.fenix.audioplayer.data.HelperClass.timeFormat;
 
 public class MyService extends Service implements MediaPlayer.OnCompletionListener {
 
@@ -31,7 +29,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     private String mPath;
     private String mQuery;
     private Uri mUri;
-    Notification notification;
+    private Notification mNotification;
 
 
     private int NOTIFICATION = R.string.local_service_started;
@@ -41,6 +39,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
 
     private final String TEST = "myService";
 
+    private WeakReference<OnCompletionListener> mListener;
 
     public MyService() {
     }
@@ -59,6 +58,10 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
                 startPlay(mPosition);
             }
         }
+        OnCompletionListener listener = mListener.get();
+        if(listener!=null) {
+            listener.onCompletion(mp);
+        }
     }
 
     public class LocalBinder extends Binder {
@@ -72,8 +75,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
         mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         mListOfSong = new LinkedList<String>();
 
-        // Display a notification about us starting.  We put an icon in the status bar.
-        showNotification();
+        createNotification();
     }
 
     @Override
@@ -103,30 +105,22 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     /**
      * Show a notification while this service is running.
      */
-    private void showNotification() {
-        // In this sample, we'll use the same text for the ticker and the expanded notification
-
+    private void createNotification() {
         CharSequence text = "Playing songs";
-
-        //Notification notification = new Notification.Builder(this)
-        //        .setContentTitle()
-
-
-        // Set the icon, scrolling text and timestamp
-        notification = new Notification(R.drawable.play_action, text,
-                System.currentTimeMillis());
-
-        // The PendingIntent to launch our activity if the user selects this notification
-        PendingIntent contentIntent = PendingIntent.getActivity(this, MainActivity.GET_SONG_DATA,
-                new Intent(this, MainActivity.class).putExtra("extra", true), 0);
-
-        // Set the info for the views that show in the notification panel.
-        notification.setLatestEventInfo(this, "AudioPlyer",
-                text, contentIntent);
-
-        // Send the notification.
-
-        //mNM.notify(NOTIFICATION, notification);
+        Intent intent = new Intent(this, MainActivity.class)
+                .putExtra("extra", true);
+                //.putExtra(MainActivity.SEND_PATH,mPath)
+                //.putExtra(MainActivity.SEND_QUERY,mQuery);
+        PendingIntent contentIntent = PendingIntent.getActivity(this,
+                MainActivity.START_FROM_NOTIFICATION,intent, 0);
+        mNotification = new Notification.Builder(getBaseContext())
+                .setContentTitle("AudioPlayer")
+                .setContentText(text)
+                .setSmallIcon(R.drawable.play_action)
+                .setLargeIcon(BitmapFactory.decodeResource(null,R.drawable.play_action))
+                .setContentIntent(contentIntent)
+                .build();
+        ;
     }
 
 
@@ -144,7 +138,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     public void startPlay(Integer position) {
 
 
-        startForeground(100500, notification);
+        startForeground(NOTIFICATION, mNotification);
         mPlay = true;
         if (position != null) {
             mPosition = position;
@@ -171,10 +165,8 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     }
 
     public void stopPlay() {
-        stopForeground(true);
-        mMediaPlayer.pause();
+        pausePlay();
         mMediaPlayer.seekTo(0);
-        mPlay = false;
     }
 
     public void pausePlay() {
@@ -216,6 +208,10 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
 
     public int getDuration() {
         return mMediaPlayer.getDuration();
+    }
+
+    public void setMPListener(MediaPlayer.OnCompletionListener listener){
+        this.mListener = new WeakReference<MediaPlayer.OnCompletionListener>(listener);
     }
 
     public boolean isLooping() {

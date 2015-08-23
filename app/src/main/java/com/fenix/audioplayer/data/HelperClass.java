@@ -1,7 +1,5 @@
 package com.fenix.audioplayer.data;
 
-import android.util.Log;
-
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
@@ -15,21 +13,26 @@ public class HelperClass {
         return path.substring(path.lastIndexOf("/") + 1);
     }
 
-    public static String timeFormat(int millis) {
+    public static String timeFormatMillis(int millis) {
         long seconds = TimeUnit.MILLISECONDS.toSeconds(millis);
         long minutes = seconds / 60;
         seconds = seconds - minutes * 60;
         return String.format("%01d:%02d", minutes, seconds);
     }
 
-
-    public static String timeFormat(String millis) {
+    public static String timeFormatMillis(String millis) {
         try {
             int value = Integer.valueOf(millis);
-            return timeFormat(value);
+            return timeFormatMillis(value);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static String timeFormatSeconds(long seconds) {
+        long minutes = seconds / 60;
+        seconds = seconds - minutes * 60;
+        return String.format("%01d:%02d", minutes, seconds);
     }
 }
