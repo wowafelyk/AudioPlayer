@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
@@ -42,12 +41,12 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
     private final static String TEST = "MainActivity";
     public final static int REQUEST_FOLDER = 101;
-    public final static int SONG_CHANGE = 102;
+    //public final static int SONG_CHANGE = 102;
     public final static int START_FROM_NOTIFICATION = 103;
     //public final static int STOP_SERVICE = 103;
     public final static String FOLDER_NAME = "folder_name";
-    public final static String SEND_PATH = "send_path";
-    public final static String SEND_QUERY = "send_query";
+    //public final static String SEND_PATH = "send_path";
+    //public final static String SEND_QUERY = "send_query";
     public final static String PATH = "path";
     //private final String SAVE_BUNDLE_SONG_STARTED = "bundle_song_started";
     private static final int TICK_WHAT = 2;
@@ -57,21 +56,21 @@ public class MainActivity extends Activity implements View.OnClickListener,
     private final String BUNDLE_SONG_TIMER = "bundle_song_timer";
     private final String BUNDLE_SONG_DURATION = "bundle_song_duration";
 
-    private Cursor mCursor;
-    private MyService mBoundService;
+
     private boolean mPlay = false;
     private boolean mIsBound = false;
     private boolean mIsNotificationStart = false;
     private boolean mIsIntentStart = false;
-
     private static String sPath;
     private static String sQuery;
     private static Integer sPosition = 0;
     private static Uri sUri;
     //private String mData; //for storing playing song
+    private Cursor mCursor;
+    private MyService mBoundService;
     private ImageButton songButton;
     private ImageButton playButton;
-    private ToggleButton loopButton, randomButton;
+    private ToggleButton loopButton;
     private TextView textProgress, textDuration, songName, authorName, albumName;
     private SeekBar seekBar;
     private SearchView mSearchView;
@@ -80,18 +79,14 @@ public class MainActivity extends Activity implements View.OnClickListener,
     private int mSongTimer;
     private int mSongDuration;
     private String mSortingOrder;
+
     private LinkedList<String> mSongList = new LinkedList<>();
-
-
     private String[] mProjection = new String[]{
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media.TITLE,
-            MediaStore.Audio.Media.TITLE_KEY,
             MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.ALBUM_KEY,
             MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.ARTIST_KEY,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.DISPLAY_NAME
     };
@@ -264,7 +259,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
         mPlayerControl.setVisibility(View.VISIBLE);
     }
 
-
     public void searchMedia(LinkedList<String> path, String quest) {
 
         sUri = null;
@@ -320,10 +314,10 @@ public class MainActivity extends Activity implements View.OnClickListener,
         }
 
         if (cursor == null) {
-            Toast.makeText(this, "По вашому запиту нічого не знайдено", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error. Музику не знайдено", Toast.LENGTH_SHORT).show();
             // query failed, handle error.
         } else if (!cursor.moveToFirst()) {
-            Toast.makeText(this, "Нема музики на девайсі", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "По вашому запиту нічого не знайдено", Toast.LENGTH_LONG).show();
             // no media on the device
         } else {
 
@@ -346,11 +340,10 @@ public class MainActivity extends Activity implements View.OnClickListener,
         }
     }
 
-
     private Handler mHandler = new Handler() {
         public void handleMessage(Message m) {
             if (mPlay == true) {
-                //TODO: program update Player progress
+
                 setProgress();
                 mSongTimer = mSongTimer + 1000;
                 if (mSongTimer >= mSongDuration){
@@ -362,7 +355,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
     };
 
 
-    //TODO: Check block
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -421,27 +413,12 @@ public class MainActivity extends Activity implements View.OnClickListener,
         mCursor.moveToPosition(sPosition);
     }
 
-
     /**
      * Sets MediaPlayer progress
      */
     private void setProgress() {
         textProgress.setText(timeFormatMillis(mSongTimer));
         seekBar.setProgress(mSongTimer);
-    }
-
-    /**
-     * Generate data for search request
-     */
-    private LinkedList<String> getArgs(String localPath) {
-        LinkedList<String> args = new LinkedList<String>();
-        if (localPath != null) {
-            args.add("%/" + sPath + "/%");
-            args.add("%/" + sPath + "/%/%");
-            return args;
-        } else {
-            return null;
-        }
     }
 
     /**
@@ -477,7 +454,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
             }
         }
     }
-
 
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {

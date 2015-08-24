@@ -50,8 +50,8 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
         if (mPlay == true) {
             mPosition = mPosition + 1;
             if ((mPosition) < mListOfSong.size()) {
-                Log.d(TEST, "onComplete" + mPosition.toString());
-                Log.d(TEST, "listZise " + mListOfSong.size());
+                Log.d(TEST, "onPosition = " + mPosition.toString());
+                Log.d(TEST, "listZise = " + mListOfSong.size());
                 startPlay(mPosition);
             } else {
                 mPosition = 0;
@@ -80,19 +80,15 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i("LocalService", "Received start id " + startId + ": " + intent);
-        // We want this service to continue running until it is explicitly
-        // stopped, so return sticky.
+
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
-        // Cancel the persistent notification.
         mMediaPlayer.release();
         mNM.cancel(NOTIFICATION);
-
-        // Tell the user we stopped.
+        Log.d(TEST,"onDestroy");
     }
 
     @Override
@@ -109,8 +105,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
         CharSequence text = "Playing songs";
         Intent intent = new Intent(this, MainActivity.class)
                 .putExtra("extra", true);
-                //.putExtra(MainActivity.SEND_PATH,mPath)
-                //.putExtra(MainActivity.SEND_QUERY,mQuery);
+
         PendingIntent contentIntent = PendingIntent.getActivity(this,
                 MainActivity.START_FROM_NOTIFICATION,intent, 0);
         mNotification = new Notification.Builder(getBaseContext())
@@ -119,9 +114,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
                 .setSmallIcon(R.drawable.play_action)
                 .setLargeIcon(BitmapFactory.decodeResource(null,R.drawable.play_action))
                 .setContentIntent(contentIntent).build();
-        ;
     }
-
 
     private void resetMP() {
         if (mMediaPlayer != null) {
@@ -136,12 +129,11 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
 
     public void startPlay(Integer position) {
 
-
         startForeground(NOTIFICATION, mNotification);
         mPlay = true;
         if (position != null) {
             mPosition = position;
-            Log.d(TEST, mPosition.toString());
+            Log.d(TEST, "mPosition = "+mPosition.toString());
             resetMP();
             try {
                 mMediaPlayer = new MediaPlayer();
@@ -176,8 +168,8 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
 
 
     public void setSongList(LinkedList<String> list, String mPath, String mQuery) {
+
         mUri = null;
-        mPosition=0;
         this.mQuery = mQuery;
         this.mPath = mPath;
         mListOfSong = list;
@@ -198,25 +190,13 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
         return mMediaPlayer.getCurrentPosition();
     }
 
-    public int getDuration() {
-        return mMediaPlayer.getDuration();
-    }
-
     public void setMPListener(OnServiceListener listener){
         this.mListener = new WeakReference<OnServiceListener>(listener);
     }
 
-    public boolean isLooping() {
-        return mLooping;
-    }
-
-    public boolean isPlay() {
-        return mPlay;
-    }
-
     public void setLoop(boolean mLooping) {
         this.mLooping = mLooping;
-        Log.d(TEST, "loop" + mLooping);
+        Log.d(TEST, "loop = " + mLooping);
         mMediaPlayer.setLooping(mLooping);
     }
 
@@ -225,6 +205,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     }
 
     public void setPosition(Integer mPosition) {
+        Log.d(TEST,"setPosition = "+mPosition);
         this.mPosition = mPosition;
     }
 
@@ -238,10 +219,6 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
 
     public String getQuery() {
         return mQuery;
-    }
-
-    public void setQuery(String mQuery) {
-        this.mQuery = mQuery;
     }
 
     public Uri getUri() {

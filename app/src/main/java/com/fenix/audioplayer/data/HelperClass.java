@@ -1,6 +1,7 @@
 package com.fenix.audioplayer.data;
 
 import java.io.File;
+import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,9 +31,15 @@ public class HelperClass {
         return null;
     }
 
-    public static String timeFormatSeconds(long seconds) {
-        long minutes = seconds / 60;
-        seconds = seconds - minutes * 60;
-        return String.format("%01d:%02d", minutes, seconds);
+    /**     Generate data for search request    */
+    public static LinkedList<String> getArgs(String localPath) {
+        LinkedList<String> args = new LinkedList<String>();
+        if (localPath != null) {
+            args.add("%/" + localPath + "/%");
+            args.add("%/" + localPath + "/%/%");
+            return args;
+        } else {
+            return null;
+        }
     }
 }

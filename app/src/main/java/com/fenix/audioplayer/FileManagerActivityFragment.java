@@ -20,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,40 +36,33 @@ import static com.fenix.audioplayer.data.HelperClass.*;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class FileManagerActivityFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+public class FileManagerActivityFragment extends Fragment implements View.OnClickListener {
 
     private static final String TEST = "myFileManger";
-    private static final int FOLDER_LAYOUT = 1;
-    private static final int FILE_LAYOUT = 2;
 
-    private SimpleCursorAdapter mAdapter;
-    private ImageButton mBackButton, mSongButton;
-    private Button acceptButton, cancelButton;
-    private TextView folderName;
-    private LinearLayout rootFragmentLL;
+    private ImageButton mBackButton;
+    private Button mAcceptButton, mCancelButton;
+    private TextView mFolderName;
+    private LinearLayout mSelectControl;
     private RecyclerView mItemRecyclerView;
 
     private Cursor mCursor;
     private RVAdapter mDataAdapter;
     private RecyclerCursorAdapter mCursorAdapter;
     private LinearLayoutManager mLinearLayoutManager;
-    private LinkedList<String> mArgs = new LinkedList<String>();
     private static String sSortingOrder;
     private String mPath;
 
     private LinkedHashSet<String> folderSet = new LinkedHashSet<String>();
     private LinkedList<DirectoryData> mDirectoryList = new LinkedList<>();
-    private Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+    private final Uri mUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
 
     private final String[] projection = new String[]{
-            MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media.TITLE,
-            MediaStore.Audio.Media.TITLE_KEY,
             MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.ALBUM_KEY,
             MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.ARTIST_KEY,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.DISPLAY_NAME
     };
@@ -80,33 +72,23 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
         View mView = inflater.inflate(R.layout.fragment_file_manager, container, false);
+
         mBackButton = (ImageButton) mView.findViewById(R.id.backButton);
-        cancelButton = (Button) mView.findViewById(R.id.button_Accept);
-        acceptButton = (Button) mView.findViewById(R.id.button_Cancel);
-        folderName = (TextView) mView.findViewById(R.id.folder_name);
+        mCancelButton = (Button) mView.findViewById(R.id.button_Accept);
+        mAcceptButton = (Button) mView.findViewById(R.id.button_Cancel);
+        mFolderName = (TextView) mView.findViewById(R.id.folder_name);
         mBackButton.setOnClickListener(this);
-        acceptButton.setOnClickListener(this);
-        cancelButton.setOnClickListener(this);
-        //changing states (GONE/VISIBLE)
-        rootFragmentLL = (LinearLayout) mView.findViewById(R.id.root_fragment_LL);
-        //changing RecyclerViewADAPTER
+        mAcceptButton.setOnClickListener(this);
+        mCancelButton.setOnClickListener(this);
+        mSelectControl = (LinearLayout) mView.findViewById(R.id.root_fragment_LL);
         mItemRecyclerView = (RecyclerView) mView.findViewById(R.id.item_recyclerView);
 
-        return mView;
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
         mLinearLayoutManager = new LinearLayoutManager(getActivity());
         mItemRecyclerView.setLayoutManager(mLinearLayoutManager);
-
         mCursorAdapter = new RecyclerCursorAdapter(getActivity(), mCursor);
-
-        rootFragmentLL.setVisibility(View.GONE);
+        mSelectControl.setVisibility(View.GONE);
         mDataAdapter = new RVAdapter(mDirectoryList);
         mItemRecyclerView.setAdapter(mDataAdapter);
 
@@ -115,27 +97,27 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
             @Override
             public void onItemClick(View v, String s) {
                 mPath = s;
-                mArgs.clear();
-                mArgs.add("%/" + s + "/%");
-                mArgs.add("%/" + s + "/%/%");
+                mCursorAdapter.swapCursor(searchMedia(getArgs(s), null));
 
-                mCursorAdapter.swapCursor(searchMedia(mArgs, null));
-
-                folderName.setText(mPath);
-                rootFragmentLL.setVisibility(View.VISIBLE);
+                mFolderName.setText(mPath);
+                mSelectControl.setVisibility(View.VISIBLE);
                 mItemRecyclerView.setAdapter(mCursorAdapter);
             }
         });
 
+        return mView;
     }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+            }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mCursor = searchMedia(null, null);
         countFolder();
-        //Setting "long lifecycle" for fragment
         setRetainInstance(true);
     }
 
@@ -148,21 +130,12 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
             Log.d(TEST, mCursor.getString(mCursor
                     .getColumnIndex(MediaStore.Audio.Media.DATA)));
         } while (mCursor.moveToNext());
-        //DELETEвивід списку
+        //обчислення кількості
         Iterator<String> iter = folderSet.iterator();
         while (iter.hasNext()) {
-            Log.d(TEST, iter.next());
-        }
-        //обчислення кількості
-        iter = folderSet.iterator();
-        while (iter.hasNext()) {
             mPath = iter.next();
-            mArgs.clear();
-            mArgs.add("%/" + mPath + "/%");
-            mArgs.add("%/" + mPath + "/%/%");
-            mCursor = searchMedia(mArgs, null);
+            mCursor = searchMedia(getArgs(mPath), null);
             mDirectoryList.add(new DirectoryData(mPath.toString(), mCursor.getCount()));
-            Log.d(TEST, mArgs.get(0) + " = " + mCursor.getCount());
         }
 
     }
@@ -192,31 +165,19 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
             selection = " ( " + MediaStore.Audio.Media.DATA + "  LIKE ? AND "
                     + MediaStore.Audio.Media.DATA + " NOT LIKE ? )";
             Log.d(TEST, selection + "   " + path.get(0));
+            cursor = contentResolver.query(mUri, projection, selection,
+                    path.toArray(new String[path.size()]), sSortingOrder);
         } else {
-            path = new LinkedList<String>();
+            cursor = contentResolver.query(mUri, projection, null, null, sSortingOrder);
         }
-        if (s != null) {
-            if (selection != null) {
-                selection += " AND ";
-            }
 
-            selection += " " + MediaStore.Audio.Media.TITLE + " LIKE ? ";
-            path.add(s);
-        }
-        if (path != null) {
-            cursor = contentResolver.query(uri, projection, selection, path.toArray(new String[path.size()]), sSortingOrder);
-        } else {
-            cursor = contentResolver.query(uri, projection, selection, null, sSortingOrder);
-
-        }
         if (cursor == null) {
-            Toast.makeText(getActivity(), "По вашому запиту нічого не знайдено", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Error. Музику не знайдено", Toast.LENGTH_SHORT).show();
             // query failed, handle error.
         } else if (!cursor.moveToFirst()) {
-            Toast.makeText(getActivity(), "Нема музики на девайсі", Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), "По вашому запиту нічого не знайдено", Toast.LENGTH_LONG).show();
             // no media on the device
         } else {
-            //TODO: Change block
             return cursor;
         }
         return null;
@@ -227,7 +188,7 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.backButton:
-                rootFragmentLL.setVisibility(View.GONE);
+                mSelectControl.setVisibility(View.GONE);
                 mItemRecyclerView.setAdapter(mDataAdapter);
                 break;
             case R.id.button_Accept:
@@ -244,19 +205,5 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
         return;
     }
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return null;
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-
-    }
 }
 
