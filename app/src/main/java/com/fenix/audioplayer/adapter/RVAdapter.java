@@ -18,7 +18,6 @@ import java.util.LinkedList;
  */
 public class RVAdapter extends RecyclerView.Adapter<RVAdapter.DirHolder> {
 
-
     private final static String TEST = "myLog-RecyclerAdapter";
     private OnItemClickListener mListener;
     private LinkedList<DirectoryData> mData;
@@ -39,9 +38,7 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.DirHolder> {
     @Override
     public DirHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
         View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.folder_layout, viewGroup, false);
-
         DirHolder dirHolder = new DirHolder(v);
-
         return dirHolder;
     }
 
@@ -57,7 +54,6 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.DirHolder> {
 
     @Override
     public int getItemCount() {
-        Log.d(TEST, "count=" + (mData.size()));
         return (mData.size());
     }
 
@@ -85,15 +81,4 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.DirHolder> {
         }
     }
 
-    //TODO:change delete if not need
-    /*public void setData(LinkedList<DirectoryData> d,boolean b){
-        if(b==true) {
-            mData.clear();
-            this.mData = d;
-            notifyDataSetChanged();
-        }else{
-            mData.addAll(d);
-            notifyDataSetChanged();
-        }
-    } */
 }

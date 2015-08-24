@@ -16,15 +16,7 @@ public class DirectoryData {
         return folderName;
     }
 
-    public void setFolderName(String folderName) {
-        this.folderName = folderName;
-    }
-
     public Integer getCount() {
         return count;
-    }
-
-    public void setCount(Integer count) {
-        this.count = count;
     }
 }

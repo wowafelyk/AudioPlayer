@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,26 +21,20 @@ import static com.fenix.audioplayer.data.HelperClass.*;
  * Created by fenix on 14.08.2015.
  */
 public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCursorAdapter.SongHolder> {
-    //TODO: add OnClickListener
 
-    private final static String TEST = "myLog-RecyclerAdapter";
     private OnItemClickListener mListener;
     private Cursor cursor;
     private String mData;
 
-    public String getmData() {
-        return mData;
-    }
-
     public void setmData(String mData) {
         this.mData = mData;
+        notifyDataSetChanged();
     }
 
     public RecyclerCursorAdapter(Context context,Cursor cursor) {
         super(context,cursor);
         this.cursor = cursor;
     }
-
 
     public interface OnItemClickListener {
         void onItemClick(View v, SongData data);
@@ -50,7 +43,6 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
     public void setOnItemClickListener(OnItemClickListener listener) {
         mListener = listener;
     }
-
 
     @Override
     public SongHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
@@ -83,7 +75,6 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
         songHolder.duration.setText(timeFormatMillis(cursor.getString(
                 cursor.getColumnIndex(MediaStore.Audio.Media.DURATION))));
 
-
         if(mListener!=null) {
             songHolder.button.setOnClickListener(new Listener(data));
         }else songHolder.button.setClickable(false);
@@ -103,8 +94,6 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
             duration = (TextView) itemView.findViewById(R.id.textDuration);
             album = (TextView) itemView.findViewById(R.id.textAlbum);
             album = (TextView) itemView.findViewById(R.id.textAlbum);
-
-
         }
     }
     class Listener implements View.OnClickListener {
@@ -120,9 +109,5 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
             }
 
         }
-    }
-    //TODO:change method
-    public void setCursor(Cursor c){
-        this.cursor=c;
     }
 }

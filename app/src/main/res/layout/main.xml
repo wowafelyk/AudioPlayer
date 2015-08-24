@@ -22,7 +22,8 @@
         android:layout_height="wrap_content"
         android:background="#ebfbff"
         android:orientation="vertical"
-        android:id="@+id/playerPult">
+        android:id="@+id/playerPult"
+        android:visibility="gone">
 
 
             <TextView

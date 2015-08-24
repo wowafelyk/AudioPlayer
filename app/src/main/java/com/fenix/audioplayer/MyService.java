@@ -21,7 +21,7 @@ import java.util.LinkedList;
 public class MyService extends Service implements MediaPlayer.OnCompletionListener {
 
     private NotificationManager mNM;
-    private MediaPlayer mMediaPlayer;
+    private MediaPlayer mMediaPlayer = new MediaPlayer();
 
     private LinkedList<String> mListOfSong;
     private Integer mPosition;
@@ -30,37 +30,37 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     private String mQuery;
     private Uri mUri;
     private Notification mNotification;
-
-
     private int NOTIFICATION = R.string.local_service_started;
     private boolean mPlay = false;
     private boolean mLooping = false;
-
-
     private final String TEST = "myService";
-
-    private WeakReference<OnCompletionListener> mListener;
+    private WeakReference<OnServiceListener> mListener;
 
     public MyService() {
     }
+
+    public interface OnServiceListener {
+        void onActionStart();
+    }
+
 
     @Override
     public void onCompletion(MediaPlayer mp) {
 
         if (mPlay == true) {
-
-            if ((mPosition + 1) < mListOfSong.size()) {
+            mPosition = mPosition + 1;
+            if ((mPosition) < mListOfSong.size()) {
                 Log.d(TEST, "onComplete" + mPosition.toString());
                 Log.d(TEST, "listZise " + mListOfSong.size());
-                startPlay(mPosition = mPosition + 1);
-            } else if (mListOfSong.size() >= 2) {
+                startPlay(mPosition);
+            } else {
                 mPosition = 0;
                 startPlay(mPosition);
             }
         }
-        OnCompletionListener listener = mListener.get();
+        OnServiceListener listener = mListener.get();
         if(listener!=null) {
-            listener.onCompletion(mp);
+            listener.onActionStart();
         }
     }
 
@@ -118,8 +118,7 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
                 .setContentText(text)
                 .setSmallIcon(R.drawable.play_action)
                 .setLargeIcon(BitmapFactory.decodeResource(null,R.drawable.play_action))
-                .setContentIntent(contentIntent)
-                .build();
+                .setContentIntent(contentIntent).build();
         ;
     }
 
@@ -150,7 +149,10 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
                 mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 mMediaPlayer.prepare();
                 mMediaPlayer.start();
+                mMediaPlayer.setLooping(mLooping);
+                mMediaPlayer.setOnCompletionListener(this);
             } catch (IOException e) {
+                Log.e(TEST,"myeror");
                 e.printStackTrace();
             }
         } else {
@@ -159,9 +161,6 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
             }
         }
 
-
-        mMediaPlayer.setLooping(mLooping);
-        mMediaPlayer.setOnCompletionListener(this);
     }
 
     public void stopPlay() {
@@ -176,26 +175,19 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     }
 
 
-    public void setSongList(LinkedList<String> list, String mQuery, String mPath) {
+    public void setSongList(LinkedList<String> list, String mPath, String mQuery) {
         mUri = null;
+        mPosition=0;
         this.mQuery = mQuery;
         this.mPath = mPath;
         mListOfSong = list;
     }
 
-    public void setSong(String song, Uri mUri) {
+    public void setSongList(LinkedList<String> list, Uri mUri) {
         this.mUri = mUri;
-        mListOfSong = new LinkedList<String>();
-        mListOfSong.add(song);
+        mListOfSong = list;
     }
 
-    public void setSong(String song, String mQuery, String mPath) {
-        mUri = null;
-        this.mQuery = mQuery;
-        this.mPath = mPath;
-        mListOfSong = new LinkedList<String>();
-        mListOfSong.add(song);
-    }
 
     public void setProgress(int i) {
         mProgress = i;
@@ -210,8 +202,8 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
         return mMediaPlayer.getDuration();
     }
 
-    public void setMPListener(MediaPlayer.OnCompletionListener listener){
-        this.mListener = new WeakReference<MediaPlayer.OnCompletionListener>(listener);
+    public void setMPListener(OnServiceListener listener){
+        this.mListener = new WeakReference<OnServiceListener>(listener);
     }
 
     public boolean isLooping() {
