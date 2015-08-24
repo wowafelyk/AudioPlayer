@@ -48,7 +48,6 @@ public class RecyclerCursorAdapter extends CursorRecyclerViewAdapter<RecyclerCur
     public SongHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
 
         View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.songlayout, viewGroup, false);
-        //TODO: set layout parameters
         SongHolder songHolder = new SongHolder(v);
 
         return songHolder;

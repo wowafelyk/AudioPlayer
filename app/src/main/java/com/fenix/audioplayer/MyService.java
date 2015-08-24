@@ -7,12 +7,10 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
-import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
-import android.util.Log;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -33,7 +31,6 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     private int NOTIFICATION = R.string.local_service_started;
     private boolean mPlay = false;
     private boolean mLooping = false;
-    private final String TEST = "myService";
     private WeakReference<OnServiceListener> mListener;
 
     public MyService() {
@@ -50,8 +47,6 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
         if (mPlay == true) {
             mPosition = mPosition + 1;
             if ((mPosition) < mListOfSong.size()) {
-                Log.d(TEST, "onPosition = " + mPosition.toString());
-                Log.d(TEST, "listZise = " + mListOfSong.size());
                 startPlay(mPosition);
             } else {
                 mPosition = 0;
@@ -88,7 +83,6 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     public void onDestroy() {
         mMediaPlayer.release();
         mNM.cancel(NOTIFICATION);
-        Log.d(TEST,"onDestroy");
     }
 
     @Override
@@ -133,7 +127,6 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
         mPlay = true;
         if (position != null) {
             mPosition = position;
-            Log.d(TEST, "mPosition = "+mPosition.toString());
             resetMP();
             try {
                 mMediaPlayer = new MediaPlayer();
@@ -144,7 +137,6 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
                 mMediaPlayer.setLooping(mLooping);
                 mMediaPlayer.setOnCompletionListener(this);
             } catch (IOException e) {
-                Log.e(TEST,"myeror");
                 e.printStackTrace();
             }
         } else {
@@ -196,7 +188,6 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
 
     public void setLoop(boolean mLooping) {
         this.mLooping = mLooping;
-        Log.d(TEST, "loop = " + mLooping);
         mMediaPlayer.setLooping(mLooping);
     }
 
@@ -205,7 +196,6 @@ public class MyService extends Service implements MediaPlayer.OnCompletionListen
     }
 
     public void setPosition(Integer mPosition) {
-        Log.d(TEST,"setPosition = "+mPosition);
         this.mPosition = mPosition;
     }
 

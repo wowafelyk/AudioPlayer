@@ -17,7 +17,6 @@ import android.provider.MediaStore;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,14 +40,9 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
     private final static String TEST = "MainActivity";
     public final static int REQUEST_FOLDER = 101;
-    //public final static int SONG_CHANGE = 102;
     public final static int START_FROM_NOTIFICATION = 103;
-    //public final static int STOP_SERVICE = 103;
     public final static String FOLDER_NAME = "folder_name";
-    //public final static String SEND_PATH = "send_path";
-    //public final static String SEND_QUERY = "send_query";
     public final static String PATH = "path";
-    //private final String SAVE_BUNDLE_SONG_STARTED = "bundle_song_started";
     private static final int TICK_WHAT = 2;
 
     private final String BUNDLE_PLAY = "bundle_play";
@@ -61,11 +55,12 @@ public class MainActivity extends Activity implements View.OnClickListener,
     private boolean mIsBound = false;
     private boolean mIsNotificationStart = false;
     private boolean mIsIntentStart = false;
+
     private static String sPath;
     private static String sQuery;
     private static Integer sPosition = 0;
     private static Uri sUri;
-    //private String mData; //for storing playing song
+
     private Cursor mCursor;
     private MyService mBoundService;
     private ImageButton songButton;
@@ -112,11 +107,11 @@ public class MainActivity extends Activity implements View.OnClickListener,
         albumName = (TextView) findViewById(R.id.albumName);
         mPlayerControl = (LinearLayout) findViewById(R.id.playerPult);
 
-        Log.d(TEST, "myrestart1");
+
         /**     woks with data from intent      */
         final String dataString = Uri.decode(getIntent().getDataString());
-        if (dataString != null) {                   //Start from intent-filter
-            Log.d(TEST, "myrestart2");
+        if (dataString != null) {         //Start from intent-filter
+
             if (dataString.contains("content://media")) {
                 sUri = getIntent().getData();
                 mCursor = getContentResolver().query(sUri, mProjection, null, null, null);
@@ -133,16 +128,17 @@ public class MainActivity extends Activity implements View.OnClickListener,
             } else Toast.makeText(this, "ПОМИЛКА - файл не знайдено", Toast.LENGTH_LONG).show();
 
         } else if (getIntent().hasExtra("extra")) {  //start from NOTIFICATION
-            Log.d(TEST, "myrestart3");
             mIsNotificationStart = true;
             mPlay = true;
         } else {
-            Log.d(TEST, "myrestart4");
+
             if (sUri == null) {
                 searchMedia(getArgs(sPath), sQuery);
             } else {
                 mCursor = getContentResolver().
                         query(sUri, mProjection, null, null, null);
+                mCursor.moveToPosition(0);
+                mSongList.add(mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
             }
         }
 
@@ -245,7 +241,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
         mHandler.removeMessages(TICK_WHAT);
         mHandler.sendMessageDelayed(Message.obtain(mHandler, TICK_WHAT), 1000);
-        Log.e(TEST, "it works");
         seekBar.setMax(Integer.parseInt(data.getDuration()));
         seekBar.setProgress(mSongTimer);
         textDuration.setText(timeFormatMillis(Integer.parseInt(data.getDuration())));
@@ -269,7 +264,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
         //set mSortingOrder
         if (m.equals("1")) {
-            Log.d(TEST, "sort " + m + "   " + asc);
             mSortingOrder = asc ? " " + MediaStore.Audio.Media.DISPLAY_NAME + " " + "ASC" :
                     " " + MediaStore.Audio.Media.DISPLAY_NAME + " " + "DESC";
         } else if (m.equals("0")) {
@@ -287,7 +281,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
         if (path != null) {
             selection = " ( " + MediaStore.Audio.Media.DATA + "  LIKE ? AND "
                     + MediaStore.Audio.Media.DATA + " NOT LIKE ? )";
-            Log.d(TEST, selection + "   " + path.get(0));
             if (quest != null) {
                 selection += " AND ((" + MediaStore.Audio.Media.DISPLAY_NAME + " LIKE ? "
                         + " ) OR ( " + MediaStore.Audio.Media.ARTIST + " LIKE ? "
@@ -336,7 +329,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
             if (mBoundService != null) {
                 mBoundService.setSongList(mSongList, sPath, sQuery);
-            }
+            } else sUri = null;
         }
     }
 
@@ -362,13 +355,11 @@ public class MainActivity extends Activity implements View.OnClickListener,
                 mBoundService.setLoop(loopButton.isChecked());
                 break;
             case R.id.move_next:
-                Log.d(TEST, "pos = " + sPosition);
                 cursorMoveTo(sPosition + 1);
                 startPlay(new SongData(mCursor, sPosition));
                 playButton.setImageResource(R.drawable.pause_action);
                 break;
             case R.id.move_prev:
-                Log.d(TEST, "pos = " + sPosition);
                 cursorMoveTo(sPosition - 1);
                 startPlay(new SongData(mCursor, sPosition));
                 playButton.setImageResource(R.drawable.pause_action);
@@ -403,10 +394,9 @@ public class MainActivity extends Activity implements View.OnClickListener,
      * realise move one step forward or backward
      */
     private void cursorMoveTo(int i) {
-        Log.d(TEST, "size = " + mCursor.getCount() + "  " + i);
         if (i < 0) {
             i = mCursor.getCount() - 1;
-        } else if (mCursor.getCount() == i) {
+        } else if (mCursor.getCount() <= i) {
             i = 0;
         }
         sPosition = i;
@@ -439,7 +429,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.e(TEST, "Check2");
+
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case REQUEST_FOLDER:
@@ -468,8 +458,6 @@ public class MainActivity extends Activity implements View.OnClickListener,
                     sQuery = mBoundService.getQuery();
                     sPosition = mBoundService.getPosition();
                     searchMedia(getArgs(sPath), sQuery);
-                    Log.d(TEST, "sPosition = " + sPath + "  " + sQuery);
-                    Log.d(TEST, "sPosition = " + sPosition + "  " + mCursor.getCount());
                     mCursor.moveToPosition(sPosition);
                     SongData data = new SongData(mCursor, sPosition);
                     mAdapter.setmData(data.getData());
@@ -486,15 +474,16 @@ public class MainActivity extends Activity implements View.OnClickListener,
                     initPlayerControl(data);
                 }
 
-            } else if (mIsIntentStart == true) {
+            } else {
                 if (sUri != null) {
                     mBoundService.setSongList(mSongList, sUri);
                 } else {
                     mBoundService.setSongList(mSongList, sPath, sQuery);
                 }
-                startPlay(new SongData(mCursor, 0));
-            } else {
-                mBoundService.setSongList(mSongList, sPath, sQuery);
+
+                if (mIsIntentStart == true) {
+                    startPlay(new SongData(mCursor, 0));
+                }
             }
 
         }
@@ -543,10 +532,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
         mPlay = onRestore.getBoolean(BUNDLE_PLAY, false);
         mSongTimer = onRestore.getInt(BUNDLE_SONG_TIMER,0);
         mSongDuration = onRestore.getInt(BUNDLE_SONG_DURATION);
-        Log.d(TEST, "myrestart");
 
         if (onRestore.getInt(BUNDLE_PLAYER_CONTROL, View.GONE) == View.VISIBLE) {
-            Log.d(TEST, "myrestart5");
             mCursor.moveToPosition(sPosition);
             SongData data = new SongData(mCursor, sPosition);
             mAdapter.setmData(data.getData());

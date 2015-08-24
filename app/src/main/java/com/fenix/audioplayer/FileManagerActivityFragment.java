@@ -1,10 +1,8 @@
 package com.fenix.audioplayer;
 
 import android.app.Fragment;
-import android.app.LoaderManager;
 import android.content.ContentResolver;
 import android.content.Intent;
-import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
@@ -13,7 +11,6 @@ import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,7 +35,6 @@ import static com.fenix.audioplayer.data.HelperClass.*;
  */
 public class FileManagerActivityFragment extends Fragment implements View.OnClickListener {
 
-    private static final String TEST = "myFileManger";
 
     private ImageButton mBackButton;
     private Button mAcceptButton, mCancelButton;
@@ -127,8 +123,6 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
         do {
             folderSet.add(getFolder(mCursor.getString(mCursor
                     .getColumnIndex(MediaStore.Audio.Media.DATA))));
-            Log.d(TEST, mCursor.getString(mCursor
-                    .getColumnIndex(MediaStore.Audio.Media.DATA)));
         } while (mCursor.moveToNext());
         //обчислення кількості
         Iterator<String> iter = folderSet.iterator();
@@ -146,7 +140,6 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
         boolean asc = prefs.getBoolean(getString(R.string.pref_sort_order), true);
         String m = prefs.getString(getString(R.string.pref_list_sort), "1");
         if(m.equals("1")) {
-            Log.d(TEST,"sort "+m+"   "+asc);
             sSortingOrder = asc ? " " + MediaStore.Audio.Media.DISPLAY_NAME + " " + "ASC" :
                     " " + MediaStore.Audio.Media.DISPLAY_NAME + " " + "DESC";
         }else if(m.equals("0")) {
@@ -164,7 +157,6 @@ public class FileManagerActivityFragment extends Fragment implements View.OnClic
         if (path != null) {
             selection = " ( " + MediaStore.Audio.Media.DATA + "  LIKE ? AND "
                     + MediaStore.Audio.Media.DATA + " NOT LIKE ? )";
-            Log.d(TEST, selection + "   " + path.get(0));
             cursor = contentResolver.query(mUri, projection, selection,
                     path.toArray(new String[path.size()]), sSortingOrder);
         } else {
